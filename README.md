@@ -155,5 +155,5 @@ Développeur .NET & Spécialiste Accessibilité Web
 Ancien stagiaire — CRTC (Conseil de la radiodiffusion et des  
 télécommunications canadiennes)
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-profil-blue)](https://linkedin.com/in/TON-PROFIL)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-profil-blue)](https://linkedin.com/in/philippe-charron-4724582b2/)
 [![Azure DevOps](https://img.shields.io/badge/Azure_DevOps-Board-0078D7)](https://dev.azure.com/charron-philippe-dev/AccessiTrack)
