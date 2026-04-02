@@ -1,0 +1,135 @@
+# ============================================================
+# AccessiTrack — Pipeline CI/CD
+# GitHub (code) + Azure DevOps (pipeline)
+# Déclenché sur : main et dev
+# ============================================================
+
+trigger:
+  branches:
+    include:
+      - main
+      - dev        # ← ta branche s'appelle dev, pas develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '10.0.x'
+  nodeVersion: '22.x'
+  backendPath: 'Backend'
+  frontendPath: 'Frontend/accessitrack-client'
+
+stages:
+
+# ============================================================
+# STAGE 1 : BUILD & TEST
+# S'exécute sur chaque push vers dev ET main
+# ============================================================
+- stage: Build_And_Test
+  displayName: '🔨 Build & Tests'
+  jobs:
+
+  # ----------------------------------------------------------
+  # JOB 1 : Backend .NET 10
+  # ----------------------------------------------------------
+  - job: Backend
+    displayName: 'Backend .NET 10'
+    steps:
+
+    - task: UseDotNet@2
+      displayName: 'Installer .NET 10'
+      inputs:
+        version: $(dotnetVersion)
+
+    - script: |
+        dotnet restore $(backendPath)/AccessiTrack.slnx
+      displayName: '📦 Restore NuGet packages'
+
+    - script: |
+        dotnet build $(backendPath)/AccessiTrack.slnx \
+          --configuration $(buildConfiguration) \
+          --no-restore
+      displayName: '🔨 Build solution'
+
+    # Les tests seront ajoutés quand tu créeras le projet xUnit
+    # Pour l'instant on commente cette étape pour ne pas bloquer
+    # - script: |
+    #     dotnet test $(backendPath)/AccessiTrack.slnx \
+    #       --no-build \
+    #       --configuration $(buildConfiguration) \
+    #       --logger "trx;LogFileName=results.trx"
+    #   displayName: '🧪 Run unit tests'
+
+    # - task: PublishTestResults@2
+    #   inputs:
+    #     testResultsFormat: 'VSTest'
+    #     testResultsFiles: '**/*.trx'
+
+    - script: |
+        dotnet publish $(backendPath)/AccessiTrack.API \
+          --configuration $(buildConfiguration) \
+          --output $(Build.ArtifactStagingDirectory)/api
+      displayName: '📤 Publish API'
+
+    - task: PublishBuildArtifacts@1
+      displayName: '📦 Publier artefact API'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/api'
+        artifactName: 'api'
+
+  # ----------------------------------------------------------
+  # JOB 2 : Frontend Angular
+  # ----------------------------------------------------------
+  - job: Frontend
+    displayName: 'Frontend Angular'
+    steps:
+
+    - task: NodeTool@0
+      displayName: 'Installer Node.js 22'
+      inputs:
+        versionSpec: $(nodeVersion)
+
+    - script: |
+        cd $(frontendPath)
+        npm ci
+      displayName: '📦 npm install'
+
+    - script: |
+        cd $(frontendPath)
+        npx ng build --configuration production
+      displayName: '🔨 ng build (production)'
+
+    - task: PublishBuildArtifacts@1
+      displayName: '📦 Publier artefact Frontend'
+      inputs:
+        pathToPublish: '$(frontendPath)/dist'
+        artifactName: 'frontend'
+
+# ============================================================
+# STAGE 2 : DÉPLOIEMENT PRODUCTION
+# Uniquement sur la branche main + approbation manuelle
+# ============================================================
+- stage: Deploy_Production
+  displayName: '🚀 Déploiement Production'
+  dependsOn: Build_And_Test
+  condition: |
+    and(
+      succeeded(),
+      eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    )
+  jobs:
+  - deployment: Deploy_API
+    displayName: 'Déployer API sur Azure App Service'
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebApp@1
+            displayName: '🚀 Déployer sur Azure App Service'
+            inputs:
+              azureSubscription: 'AccessiTrack-ServiceConnection'
+              appType: 'webApp'
+              appName: 'accessitrack-api'
+              package: '$(Pipeline.Workspace)/api'
