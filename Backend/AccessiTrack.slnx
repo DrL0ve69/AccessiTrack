@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AccessiTrack.API/AccessiTrack.API.csproj" />
+  <Project Path="AccessiTrack.Application/AccessiTrack.Application.csproj" />
+  <Project Path="AccessiTrack.Domain/AccessiTrack.Domain.csproj" />
+  <Project Path="AccessiTrack.Infrastructure/AccessiTrack.Infrastructure.csproj" />
+</Solution>
