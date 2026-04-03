@@ -69,52 +69,45 @@ stages:
       artifact: api
 
     - powershell: |
-        # 1. Charger le XML
-        [xml]$xml = @'
-        $(AZURE_WEBAPP_PUBLISH_PROFILE)
-        '@
+        # 1. Récupération des variables depuis la Library
+        $userName = "$(AZ_USER)"
+        $password = "$(AZ_PWD)"
+        $apiUrl = "https://$(AZ_URL)/api/zipdeploy"
+        
+        Write-Host "Tentative de déploiement vers : $apiUrl"
+        Write-Host "Utilisateur : $userName"
 
-        # 2. Chercher le profil qui contient les infos de déploiement (souvent le premier ou celui nommé 'Web Deploy')
-        # On essaie de récupérer l'URL et les accès de manière plus flexible
-        $profile = $xml.publishData.publishProfile | Where-Object { $_.publishMethod -ne "ReadOnly" } | Select-Object -First 1
-
-        if (-not $profile) {
-            Write-Error "Impossible de trouver un profil de publication valide dans le secret AZURE_WEBAPP_PUBLISH_PROFILE"
-            exit 1
+        # 2. Création de l'authentification (Basic Auth)
+        $base64Auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $userName, $password)))
+        $headers = @{ 
+            Authorization = "Basic $base64Auth" 
         }
 
-        $userName = $profile.userName
-        $password = $profile.userPWD
-        
-        # Nettoyage de l'URL : on enlève le port (ex: :443) et on s'assure qu'elle commence par https
-        $rawUrl = $profile.publishUrl
-        $cleanUrl = $rawUrl.Split(':')[0]
-        $apiUrl = "https://$cleanUrl/api/zipdeploy"
-        
-        Write-Host "Nom d'utilisateur détecté : $userName"
-        Write-Host "URL cible détectée : $apiUrl"
-
-        # 3. Créer l'en-tête d'authentification Basic
-        $pair = "{0}:{1}" -f $userName, $password
-        $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
-        $base64 = [Convert]::ToBase64String($bytes)
-        $headers = @{ Authorization = "Basic $base64" }
-
-        # 4. Compresser le dossier API en ZIP
+        # 3. Compression des fichiers de l'API
+        # On cible le dossier 'api' téléchargé depuis l'artefact
+        $sourceDir = "$(Pipeline.Workspace)\api"
         $zipPath = "$(Pipeline.Workspace)\api_deploy.zip"
+        
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
         
-        Write-Host "Compression du dossier : $(Pipeline.Workspace)\api"
-        Compress-Archive -Path "$(Pipeline.Workspace)\api\*" -DestinationPath $zipPath -Force
+        Write-Host "Compression du dossier $sourceDir en cours..."
+        Compress-Archive -Path "$sourceDir\*" -DestinationPath $zipPath -Force
 
-        # 5. Envoyer le ZIP
-        Write-Host "Envoi du fichier ZIP vers Azure..."
+        # 4. Envoi du package ZIP vers Azure Kudu
+        Write-Host "Envoi du ZIP (Zip Push)..."
         try {
+            # On utilise une méthode robuste pour l'upload de gros fichiers
             Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
-            Write-Host "Félicitations ! Le déploiement a réussi."
+            Write-Host "TERMINÉ : L'API a été déployée avec succès !"
         }
         catch {
-            Write-Error "Le déploiement a échoué : $_"
+            Write-Error "ÉCHEC DU DÉPLOIEMENT : $_"
+            # Affiche plus de détails en cas d'erreur HTTP
+            if ($_.Exception.Response) {
+                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                $details = $reader.ReadToEnd()
+                Write-Host "Détails de l'erreur : $details"
+            }
             exit 1
         }
-      displayName: 'Déployer API (Direct Zip Push corrigé)'
+      displayName: 'Déployer API (Direct Zip Push final)'
