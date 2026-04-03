@@ -1,0 +1,97 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+/* =============================================
+   ACCESSIBILITÉ — Classe utilitaire screen reader
+   ============================================= */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =============================================
+   FOCUS VISIBLE — WCAG 2.4.7
+   ============================================= */
+:focus-visible {
+  outline: 3px solid #0066cc;
+  outline-offset: 2px;
+}
+
+/* =============================================
+   CONTRASTE — Ratio minimum 4.5:1 WCAG 1.4.3
+   ============================================= */
+body {
+  background-color: #ffffff;
+  color: #1a1a1a; /* Ratio 16.1:1 */
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+a {
+  color: #0066cc; /* Ratio 4.6:1 sur blanc */
+}
+
+.badge-active {
+  background-color: #1a6b1a;
+  color: #ffffff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.badge-archived {
+  background-color: #5a5a5a;
+  color: #ffffff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.critical {
+  color: #cc0000; /* Ratio 5.9:1 */
+}
+
+/* =============================================
+   FORMULAIRES — Indication d'erreur
+   ============================================= */
+input[aria-invalid="true"] {
+  border-color: #cc0000;
+  border-width: 2px;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: #5a5a5a;
+}
+
+[role="alert"] {
+  background-color: #fff0f0;
+  border-left: 4px solid #cc0000;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: #cc0000;
+}
