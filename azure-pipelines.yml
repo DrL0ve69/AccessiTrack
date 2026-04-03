@@ -42,17 +42,18 @@ stages:
       displayName: Installer Node.js
       inputs:
         versionSpec: $(nodeVersion)
-    - script: npm install -g @angular/cli
-      displayName: Installer Angular CLI
+
     - script: |
         cd Frontend/Accessitrack.client
-        npm install
-        ng build --configuration production
-      displayName: npm install et build
+        call npm install
+        call npx ng build --configuration production
+      displayName: npm install et ng build
+      
     - task: PublishBuildArtifacts@1
       displayName: Publier artefact Frontend
       inputs:
-        pathToPublish: 'Frontend/Accessitrack.client/dist/Accessitrack.client'
+        # On pointe vers le dossier parent 'dist' pour être sûr de tout prendre
+        pathToPublish: 'Frontend/Accessitrack.client/dist'
         artifactName: frontend
 
 - stage: Deploy_Production
@@ -75,7 +76,6 @@ stages:
           - task: AzureWebApp@1
             displayName: 'Deployer sur accessitrack-api'
             inputs:
-              # CET ORDRE EST CRUCIAL
               connectionType: 'publishProfile'
               publishProfileContent: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
               appType: 'webApp'
