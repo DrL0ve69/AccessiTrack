@@ -68,53 +68,57 @@ stages:
     - download: current
       artifact: api
 
+    # 1. Créer le ZIP (ArchiveFiles est plus robuste sur Windows)
+    - task: ArchiveFiles@2
+      displayName: 'Créer l archive ZIP'
+      inputs:
+        rootFolderOrFile: '$(Pipeline.Workspace)/api'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/deploy.zip'
+        replaceExistingArchive: true
+
+    # 2. Diagnostic : On vérifie si l'archive pèse bien quelques Mo
     - powershell: |
-        $userName = '$(AZ_USER)'
-        $password = '$(AZ_PWD)'
-        $apiUrl = "https://$(AZ_URL)/api/zipdeploy"
-        
-        # On cherche où sont VRAIMENT les fichiers
-        $possibleDir = "C:\agent\_work\1\api"
-        if (-not (Test-Path "$possibleDir\AccessiTrack.API.dll")) {
-            Write-Host "Recherche profonde du dossier de build..."
-            $actualPath = Get-ChildItem -Path "C:\agent\_work\1" -Filter "AccessiTrack.API.dll" -Recurse | Select-Object -ExpandProperty DirectoryName -First 1
-            if ($actualPath) { 
-                $sourceDir = $actualPath
-                Write-Host "Dossier trouvé : $sourceDir"
-            } else {
-                throw "Impossible de trouver les fichiers de l'API dans C:\agent\_work\1"
-            }
+        $path = "$(Build.ArtifactStagingDirectory)/deploy.zip"
+        if (Test-Path $path) {
+            $size = [math]::Round((Get-Item $path).Length / 1KB, 2)
+            Write-Host "##[section]ZIP créé avec succès ! Taille : $size KB"
+            # Si la taille est < 100KB, c'est probablement que le dossier source était vide
+            if ($size -lt 10) { Write-Host "##[warning] Le ZIP semble très petit, vérifie le contenu de l'artefact !" }
         } else {
-            $sourceDir = $possibleDir
+            throw "Le fichier ZIP n'a pas été généré dans $path"
         }
+      displayName: 'Vérifier ZIP'
 
-        $zipPath = "$(Build.ArtifactStagingDirectory)\deploy.zip"
-
-        Write-Host "Contenu final du dossier avant zip :"
-        Get-ChildItem -Path $sourceDir | Select-Object Name
-
-        if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-
-        # Création du ZIP proprement
-        Push-Location $sourceDir
-        Compress-Archive -Path * -DestinationPath $zipPath -Force
-        Pop-Location
-
-        # Authentification et Envoi
-        $base64Auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $userName, $password)))
-        $headers = @{ Authorization = "Basic $base64Auth" }
-
+    # 3. Envoi vers Azure Kudu
+    - powershell: |
+        # On construit la chaîne d'auth proprement
+        $pair = "$(AZ_USER):$(AZ_PWD)"
+        $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+        $base64 = [Convert]::ToBase64String($bytes)
+        
+        $headers = @{
+            Authorization = "Basic $base64"
+        }
+        
+        $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
+        $url = "https://$(AZ_URL)/api/zipdeploy"
+        
+        Write-Host "Envoi en cours vers $url ..."
+        
         try {
-            Write-Host "Envoi du ZIP vers Azure..."
-            Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
-            Write-Host "SUCCÈS : Déploiement terminé !"
+            Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
+            Write-Host "##[section]DÉPLOIEMENT RÉUSSI !"
         }
         catch {
-            $err = $_.Exception.Response
-            if ($err) {
-                $reader = New-Object System.IO.StreamReader($err.GetResponseStream())
-                Write-Host "Détails erreur Azure : $($reader.ReadToEnd())"
+            $msg = $_.Exception.Message
+            Write-Host "##[error] Erreur lors de l'envoi : $msg"
+            if ($_.Exception.Response) {
+                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                $details = $reader.ReadToEnd()
+                Write-Host "##[error] Détails serveur : $details"
             }
-            throw "Le déploiement a échoué avec l'erreur 400. Vérifie le contenu du dossier ci-dessus."
+            exit 1
         }
-      displayName: 'Déployer API (Fix Path & Zip)'
+      displayName: 'Push Zip to Azure'
