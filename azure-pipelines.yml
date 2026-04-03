@@ -110,26 +110,26 @@ stages:
 # STAGE 2 : DÉPLOIEMENT PRODUCTION
 # Uniquement sur la branche main + approbation manuelle
 # ============================================================
-- stage: Deploy_Production
-  displayName: '🚀 Déploiement Production'
-  dependsOn: Build_And_Test
-  condition: |
-    and(
-      succeeded(),
-      eq(variables['Build.SourceBranch'], 'refs/heads/main')
-    )
-  jobs:
-  - deployment: Deploy_API
-    displayName: 'Déployer API sur Azure App Service'
-    environment: 'Production'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: AzureWebApp@1
-            displayName: '🚀 Déployer sur Azure App Service'
-            inputs:
-              azureSubscription: 'AccessiTrack-ServiceConnection'
-              appType: 'webApp'
-              appName: 'accessitrack-api'
-              package: '$(Pipeline.Workspace)/api'
+# - stage: Deploy_Production
+#   displayName: '🚀 Déploiement Production'
+#   dependsOn: Build_And_Test
+#   condition: |
+#     and(
+#       succeeded(),
+#       eq(variables['Build.SourceBranch'], 'refs/heads/main')
+#     )
+#   jobs:
+#   - deployment: Deploy_API
+#     displayName: 'Déployer API sur Azure App Service'
+#     environment: 'Production'
+#     strategy:
+#       runOnce:
+#         deploy:
+#           steps:
+#           - task: AzureWebApp@1
+#             displayName: '🚀 Déployer sur Azure App Service'
+#             inputs:
+#               azureSubscription: 'AccessiTrack-ServiceConnection'
+#               appType: 'webApp'
+#               appName: 'accessitrack-api'
+#               package: '$(Pipeline.Workspace)/api'
