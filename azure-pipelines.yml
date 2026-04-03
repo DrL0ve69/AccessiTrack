@@ -1,144 +1,67 @@
-# ============================================================
-# AccessiTrack — Pipeline CI/CD
-# GitHub (code) + Azure DevOps (pipeline)
-# Déclenché sur : main et dev
-# ============================================================
-
 trigger:
   branches:
     include:
       - main
-      - dev        # ← ta branche s'appelle dev, pas develop
+      - dev
 
 pool:
   name: Default
 
 variables:
-  buildConfiguration: 'Release'
-  dotnetVersion: '10.0.x'
-  nodeVersion: '22.x'
-  backendPath: 'Backend'
-  frontendPath: 'Frontend/AccessiTrack.Client'
+  buildConfiguration: Release
+  dotnetVersion: 10.0.x
+  nodeVersion: 22.x
 
 stages:
 
-# ============================================================
-# STAGE 1 : BUILD & TEST
-# S'exécute sur chaque push vers dev ET main
-# ============================================================
 - stage: Build_And_Test
-  displayName: '🔨 Build & Tests'
+  displayName: Build et Tests
   jobs:
 
-  # ----------------------------------------------------------
-  # JOB 1 : Backend .NET 10
-  # ----------------------------------------------------------
   - job: Backend
-    displayName: 'Backend .NET 10'
+    displayName: Backend .NET 10
     steps:
 
     - task: UseDotNet@2
-      displayName: 'Installer .NET 10'
+      displayName: Installer .NET 10
       inputs:
-        version: $(dotnetVersion)
+        version: 10.0.x
 
-    - script: |
-        dotnet restore $(backendPath)/AccessiTrack.slnx
-      displayName: '📦 Restore NuGet packages'
+    - script: dotnet restore Backend\AccessiTrack.slnx
+      displayName: Restore NuGet packages
 
-    - script: |
-        dotnet build $(backendPath)/AccessiTrack.slnx \
-          --configuration $(buildConfiguration) \
-          --no-restore
-      displayName: '🔨 Build solution'
+    - script: dotnet build Backend\AccessiTrack.slnx --configuration Release --no-restore
+      displayName: Build solution
 
-    # Les tests seront ajoutés quand tu créeras le projet xUnit
-    # Pour l'instant on commente cette étape pour ne pas bloquer
-    # - script: |
-    #     dotnet test $(backendPath)/AccessiTrack.slnx \
-    #       --no-build \
-    #       --configuration $(buildConfiguration) \
-    #       --logger "trx;LogFileName=results.trx"
-    #   displayName: '🧪 Run unit tests'
-
-    # - task: PublishTestResults@2
-    #   inputs:
-    #     testResultsFormat: 'VSTest'
-    #     testResultsFiles: '**/*.trx'
-
-    - script: |
-        dotnet publish $(backendPath)/AccessiTrack.API \
-          --configuration $(buildConfiguration) \
-          --output $(Build.ArtifactStagingDirectory)/api
-      displayName: '📤 Publish API'
+    - script: dotnet publish Backend\AccessiTrack.API --configuration Release --output $(Build.ArtifactStagingDirectory)\api
+      displayName: Publish API
 
     - task: PublishBuildArtifacts@1
-      displayName: '📦 Publier artefact API'
+      displayName: Publier artefact API
       inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)/api'
-        artifactName: 'api'
+        pathToPublish: $(Build.ArtifactStagingDirectory)\api
+        artifactName: api
 
-  # ----------------------------------------------------------
-  # JOB 2 : Frontend Angular
-  # ----------------------------------------------------------
   - job: Frontend
-    displayName: 'Frontend Angular'
+    displayName: Frontend Angular
     steps:
 
     - task: NodeTool@0
-      displayName: 'Installer Node.js 22'
+      displayName: Installer Node.js
       inputs:
-        versionSpec: $(nodeVersion)
+        versionSpec: 22.x
 
-    - script: |
-        cd $(frontendPath)
-        npm ci
-      displayName: '📦 npm install'
+    - script: npm install -g @angular/cli
+      displayName: Installer Angular CLI
 
-    - script: |
-        cd $(frontendPath)
-        npx ng build --configuration production
-      displayName: '🔨 ng build (production)'
+    - script: cd Frontend\Accessitrack.client && npm install
+      displayName: npm install
+
+    - script: cd Frontend\Accessitrack.client && ng build --configuration production
+      displayName: ng build production
 
     - task: PublishBuildArtifacts@1
-      displayName: '📦 Publier artefact Frontend'
+      displayName: Publier artefact Frontend
       inputs:
-        pathToPublish: '$(frontendPath)/dist'
-        artifactName: 'frontend'
-
-# ============================================================
-# STAGE 2 : DÉPLOIEMENT PRODUCTION
-# Méthode : Publish Profile (sans droits Entra requis)
-# ============================================================
-- stage: Deploy_Production
-  displayName: '🚀 Déploiement Production'
-  dependsOn: Build_And_Test
-  condition: |
-    and(
-      succeeded(),
-      eq(variables['Build.SourceBranch'], 'refs/heads/main')
-    )
-  variables:
-    - group: accessitrack-secrets   # ← charge le Variable Group
-
-  jobs:
-  - deployment: Deploy_API
-    displayName: 'Déployer API sur Azure App Service'
-    environment: 'Production'       # ← approbation manuelle configurée ici
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-
-          # Télécharge l'artefact produit par le job Backend
-          - download: current
-            artifact: api
-
-          - task: AzureWebApp@1
-            displayName: '🚀 Déployer sur accessitrack-api'
-            inputs:
-              azureSubscription: ''   # ← Laisser vide avec cette méthode
-              appType: 'webAppLinux'
-              appName: 'accessitrack-api'
-              package: '$(Pipeline.Workspace)/api/**/*.zip'
-              publishProfileContent: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
+        pathToPublish: Frontend/Accessitrack.client/dist
+        artifactName: frontend
