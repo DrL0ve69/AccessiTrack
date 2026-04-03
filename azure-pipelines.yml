@@ -70,8 +70,8 @@ stages:
 
     - powershell: |
         # 1. Récupération des variables depuis la Library
-        $userName = "$(AZ_USER)"
-        $password = "$(AZ_PWD)"
+        $userName = '$(AZ_USER)'
+        $password = '$(AZ_PWD)'
         $apiUrl = "https://$(AZ_URL)/api/zipdeploy"
         
         Write-Host "Tentative de déploiement vers : $apiUrl"
