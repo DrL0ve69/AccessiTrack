@@ -75,45 +75,47 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/deploy.zip'
         replaceExistingArchive: true
 
-    - task: PowerShell@2
+    # 2. Diagnostic : On vérifie si l'archive pèse bien quelques Mo
+    - powershell: |
+        $path = "$(Build.ArtifactStagingDirectory)/deploy.zip"
+        if (Test-Path $path) {
+            $size = [math]::Round((Get-Item $path).Length / 1KB, 2)
+            Write-Host "##[section]ZIP créé avec succès ! Taille : $size KB"
+            # Si la taille est < 100KB, c'est probablement que le dossier source était vide
+            if ($size -lt 10) { Write-Host "##[warning] Le ZIP semble très petit, vérifie le contenu de l'artefact !" }
+        } else {
+            throw "Le fichier ZIP n'a pas été généré dans $path"
+        }
+      displayName: 'Vérifier ZIP'
+
+    # 3. Envoi vers Azure Kudu
+    - powershell: |
+        # On construit la chaîne d'auth proprement
+        $pair = "$(AZ_USER):$(AZ_PWD)"
+        $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+        $base64 = [Convert]::ToBase64String($bytes)
+        
+        $headers = @{
+            Authorization = "Basic $base64"
+        }
+        
+        $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
+        $url = "https://$(AZ_URL)/api/zipdeploy"
+        
+        Write-Host "Envoi en cours vers $url ..."
+        
+        try {
+            Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
+            Write-Host "##[section]DÉPLOIEMENT RÉUSSI !"
+        }
+        catch {
+            $msg = $_.Exception.Message
+            Write-Host "##[error] Erreur lors de l'envoi : $msg"
+            if ($_.Exception.Response) {
+                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                $details = $reader.ReadToEnd()
+                Write-Host "##[error] Détails serveur : $details"
+            }
+            exit 1
+        }
       displayName: 'Push Zip to Azure'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # 1. Nettoyage automatique de l'URL au cas où
-          $rawUrl = "$(AZ_URL)"
-          $cleanUrl = $rawUrl.Trim().TrimStart('.').TrimStart(':').Replace("https://", "")
-          $url = "https://$cleanUrl/api/zipdeploy"
-          
-          # 2. Utilisation du SYSTEM_ACCESSTOKEN pour forcer l'auth
-          $token = "$env:SYSTEM_ACCESSTOKEN"
-          $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$token"))
-          $headers = @{ Authorization = "Basic $base64AuthInfo" }
-          
-          $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
-          Write-Host "Tentative d'envoi vers $url ..."
-          
-          try {
-              Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
-              Write-Host "##[section]DÉPLOIEMENT RÉUSSI !"
-          }
-          catch {
-              $msg = $_.Exception.Message
-              Write-Host "##[warning] OAuth a échoué ($msg). Tentative de secours avec AZ_USER..."
-              
-              $pair = "$(AZ_USER):$(AZ_PWD)"
-              $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
-              $base64 = [Convert]::ToBase64String($bytes)
-              $headersSecours = @{ Authorization = "Basic $base64" }
-              
-              try {
-                  Invoke-RestMethod -Uri $url -Method Post -Headers $headersSecours -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
-                  Write-Host "##[section]DÉPLOIEMENT RÉUSSI via identifiants classiques !"
-              }
-              catch {
-                  Write-Host "##[error] ÉCHEC TOTAL. Détails : $($_.Exception.Message)"
-                  exit 1
-              }
-          }
-      env:
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
