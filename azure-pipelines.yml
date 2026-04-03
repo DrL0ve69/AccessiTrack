@@ -74,21 +74,22 @@ stages:
             artifact: api
 
           # AJOUTE LE TEST ICI
-          - bash: |
-              if [ -z "$(AZURE_WEBAPP_PUBLISH_PROFILE)" ]; then
-                echo "##vso[task.logissue type=error]ERREUR : La variable AZURE_WEBAPP_PUBLISH_PROFILE est VIDE ou inaccessible."
-                exit 1
-              else
-                echo "La variable est bien chargée. Longueur : ${#AZURE_WEBAPP_PUBLISH_PROFILE} caractères."
-              fi
-            displayName: 'Vérifier la variable de secret'
-          
+          - powershell: |
+              # On utilise Pipeline.Workspace pour être cohérent avec le download
+              $path = "$(Pipeline.Workspace)\profile.publishsettings"
+              $content = @"
+              $(AZURE_WEBAPP_PUBLISH_PROFILE)
+              "@
+              Set-Content -Path $path -Value $content
+              Write-Host "Fichier de profil créé avec succès à l'emplacement : $path"
+            displayName: 'Créer fichier de configuration temporaire'
+
           - task: AzureWebApp@1
-            displayName: 'Deployer sur accessitrack-api'
+            displayName: 'Deployer via Fichier de Profil'
             inputs:
               connectionType: 'publishProfile'
-              publishProfile: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
+              publishProfile: '$(Pipeline.Workspace)\profile.publishsettings'
               appType: 'webApp'
-              appName: 'accessitrack-api'
-              package: '$(Pipeline.Workspace)/api'
+              appName: 'accessitrack-api-dea0b3dgddg7eng0'
+              package: '$(Pipeline.Workspace)\api'
               deploymentMethod: 'zipDeploy'
