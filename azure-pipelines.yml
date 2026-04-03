@@ -3,12 +3,15 @@ trigger:
     include:
       - main
       - dev
+
 pool:
   name: Default
+
 variables:
   buildConfiguration: Release
   dotnetVersion: 10.0.x
   nodeVersion: 22.x
+
 stages:
 - stage: Build_And_Test
   displayName: Build et Tests
@@ -19,42 +22,45 @@ stages:
     - task: UseDotNet@2
       displayName: Installer .NET 10
       inputs:
-        version: 10.0.x
-    - script: dotnet restore Backend\AccessiTrack.slnx
+        version: $(dotnetVersion)
+    - script: dotnet restore Backend/AccessiTrack.slnx
       displayName: Restore NuGet packages
-    - script: dotnet build Backend\AccessiTrack.slnx --configuration Release --no-restore
+    - script: dotnet build Backend/AccessiTrack.slnx --configuration $(buildConfiguration) --no-restore
       displayName: Build solution
-    - script: dotnet publish Backend\AccessiTrack.API --configuration Release --output $(Build.ArtifactStagingDirectory)\api
+    - script: dotnet publish Backend/AccessiTrack.API --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api
       displayName: Publish API
     - task: PublishBuildArtifacts@1
       displayName: Publier artefact API
       inputs:
-        pathToPublish: $(Build.ArtifactStagingDirectory)\api
+        pathToPublish: $(Build.ArtifactStagingDirectory)/api
         artifactName: api
+
   - job: Frontend
     displayName: Frontend Angular
     steps:
     - task: NodeTool@0
       displayName: Installer Node.js
       inputs:
-        versionSpec: 22.x
+        versionSpec: $(nodeVersion)
     - script: npm install -g @angular/cli
       displayName: Installer Angular CLI
-    - script: cd Frontend\Accessitrack.client && npm install
-      displayName: npm install
-    - script: cd Frontend\Accessitrack.client && ng build --configuration production
-      displayName: ng build production
+    - script: |
+        cd Frontend/Accessitrack.client
+        npm install
+        ng build --configuration production
+      displayName: npm install et build
     - task: PublishBuildArtifacts@1
       displayName: Publier artefact Frontend
       inputs:
-        pathToPublish: Frontend/Accessitrack.client/dist
+        pathToPublish: 'Frontend/Accessitrack.client/dist'
         artifactName: frontend
+
 - stage: Deploy_Production
   displayName: Deploiement Production
   dependsOn: Build_And_Test
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   variables:
-  - group: accessitrack-secrets # On appelle ton groupe de secrets ici
+  - group: accessitrack-secrets
   jobs:
   - deployment: Deploy_API
     displayName: Deployer API sur Azure App Service
@@ -64,17 +70,15 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: api     
+            artifact: api
+          
           - task: AzureWebApp@1
             displayName: 'Deployer sur accessitrack-api'
             inputs:
-              # On définit le type de connexion AVANT toute chose
+              # CET ORDRE EST CRUCIAL
               connectionType: 'publishProfile'
-              # On donne le contenu du secret XML
               publishProfileContent: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
-              # IMPORTANT: On laisse azureSubscription vide explicitement
-              azureSubscription: ''
               appType: 'webApp'
               appName: 'accessitrack-api-dea0b3dgddg7eng0'
-              # On pointe vers le dossier de l'artefact téléchargé juste avant
               package: '$(Pipeline.Workspace)/api'
+              deploymentMethod: 'zipDeploy'
