@@ -69,45 +69,43 @@ stages:
       artifact: api
 
     - powershell: |
-        # 1. Récupération des variables depuis la Library
         $userName = '$(AZ_USER)'
         $password = '$(AZ_PWD)'
         $apiUrl = "https://$(AZ_URL)/api/zipdeploy"
         
-        Write-Host "Tentative de déploiement vers : $apiUrl"
-        Write-Host "Utilisateur : $userName"
-
-        # 2. Création de l'authentification (Basic Auth)
-        $base64Auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $userName, $password)))
-        $headers = @{ 
-            Authorization = "Basic $base64Auth" 
+        # 1. Préparation des chemins
+        $sourceDir = "$(Pipeline.Workspace)\api"
+        $zipPath = "$(Pipeline.Workspace)\deploy.zip" # Nom plus simple
+        
+        # 2. Nettoyage si un ancien ZIP existe
+        if (Test-Path $zipPath) { 
+            Remove-Item $zipPath -Force -ErrorAction SilentlyContinue 
         }
 
-        # 3. Compression des fichiers de l'API
-        # On cible le dossier 'api' téléchargé depuis l'artefact
-        $sourceDir = "$(Pipeline.Workspace)\api"
-        $zipPath = "$(Pipeline.Workspace)\api_deploy.zip"
-        
-        if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-        
-        Write-Host "Compression du dossier $sourceDir en cours..."
-        Compress-Archive -Path "$sourceDir\*" -DestinationPath $zipPath -Force
+        # 3. Compression optimisée
+        Write-Host "Compression du contenu de $sourceDir..."
+        # On se déplace dans le dossier pour que le ZIP ne contienne pas le dossier 'api' lui-même
+        Push-Location $sourceDir
+        Compress-Archive -Path * -DestinationPath $zipPath -Force
+        Pop-Location
 
-        # 4. Envoi du package ZIP vers Azure Kudu
-        Write-Host "Envoi du ZIP (Zip Push)..."
+        # 4. Authentification
+        $base64Auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $userName, $password)))
+        $headers = @{ Authorization = "Basic $base64Auth" }
+
+        # 5. Envoi avec diagnostic
+        Write-Host "Envoi vers Azure (Zip Push)..."
         try {
-            # On utilise une méthode robuste pour l'upload de gros fichiers
             Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
-            Write-Host "TERMINÉ : L'API a été déployée avec succès !"
+            Write-Host "TERMINÉ : L'API a été déployée !"
         }
         catch {
-            Write-Error "ÉCHEC DU DÉPLOIEMENT : $_"
-            # Affiche plus de détails en cas d'erreur HTTP
+            $errorMessage = $_.Exception.Message
+            Write-Host "ERREUR : $errorMessage"
             if ($_.Exception.Response) {
                 $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                $details = $reader.ReadToEnd()
-                Write-Host "Détails de l'erreur : $details"
+                Write-Host "Détails serveur : $($reader.ReadToEnd())"
             }
             exit 1
         }
-      displayName: 'Déployer API (Direct Zip Push final)'
+      displayName: 'Déployer API (Fix 400)'
