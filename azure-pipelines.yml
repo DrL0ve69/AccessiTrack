@@ -7,10 +7,15 @@ trigger:
 pool:
   name: Default
 
+# Chargement du groupe de variables globalement
 variables:
-  buildConfiguration: 'Release'
-  dotnetVersion: '10.0.x'
-  nodeVersion: '22.x'
+  - group: accessitrack-secrets
+  - name: buildConfiguration
+    value: 'Release'
+  - name: dotnetVersion
+    value: '10.0.x'
+  - name: nodeVersion
+    value: '22.x'
 
 stages:
 - stage: Build_And_Test
@@ -23,12 +28,16 @@ stages:
       displayName: 'Installer .NET 10'
       inputs:
         version: $(dotnetVersion)
+        
     - script: dotnet restore Backend/AccessiTrack.slnx
       displayName: 'Restore NuGet packages'
+      
     - script: dotnet build Backend/AccessiTrack.slnx --configuration $(buildConfiguration) --no-restore
       displayName: 'Build solution'
+      
     - script: dotnet publish Backend/AccessiTrack.API --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api
       displayName: 'Publish API'
+      
     - task: PublishBuildArtifacts@1
       displayName: 'Publier artefact API'
       inputs:
@@ -42,12 +51,13 @@ stages:
       displayName: 'Installer Node.js'
       inputs:
         versionSpec: $(nodeVersion)
-    # SOLUTION ICI : Utilisation de powershell au lieu de script pour éviter l'arrêt prématuré sous Windows
+        
     - powershell: |
         cd Frontend/Accessitrack.client
         npm install
         npx ng build --configuration production
       displayName: 'npm install et ng build'
+      
     - task: PublishBuildArtifacts@1
       displayName: 'Publier artefact Frontend'
       inputs:
@@ -57,18 +67,17 @@ stages:
 - stage: Deploy_Production
   displayName: 'Deploiement Production'
   dependsOn: Build_And_Test
+  # S'exécute uniquement si le build réussit et qu'on est sur la branche main
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-  variables:
-  - group: accessitrack-secrets
   jobs:
   - job: Deploy_API
-    displayName: 'Deployer API via OAuth'
+    displayName: 'Deployer API via Kudu'
     steps:
     - download: current
       artifact: api
 
     - task: ArchiveFiles@2
-      displayName: 'Créer l archive ZIP'
+      displayName: 'Créer l archive ZIP pour déploiement'
       inputs:
         rootFolderOrFile: '$(Pipeline.Workspace)/api'
         includeRootFolder: false
@@ -77,40 +86,40 @@ stages:
         replaceExistingArchive: true
 
     - task: PowerShell@2
-      displayName: 'Push Zip to Azure'
+      displayName: 'Push Zip via Kudu API'
       inputs:
         targetType: 'inline'
         script: |
-          $rawUrl = "$(AZ_URL)"
-          $cleanUrl = $rawUrl.Trim().TrimStart('.').TrimStart(':').Replace("https://", "")
-          $url = "https://$cleanUrl/api/zipdeploy"
-          
-          $token = "$env:SYSTEM_ACCESSTOKEN"
-          $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$token"))
-          $headers = @{ Authorization = "Basic $base64AuthInfo" }
-          
+          # Nettoyage de l'URL au cas où
+          $urlBase = "$(AZ_URL)".Replace("https://", "").TrimEnd('/')
+          $fullUrl = "https://$urlBase/api/zipdeploy"
           $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
-          Write-Host "Tentative d'envoi vers $url ..."
+          
+          Write-Host "Cible : $fullUrl"
+          
+          # Préparation de l'authentification Basic (User:Password)
+          # On utilise $env: pour lire les variables injectées par le bloc 'env' plus bas
+          $pair = "$($env:DEPLOY_USER):$($env:DEPLOY_PWD)"
+          $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+          $base64 = [Convert]::ToBase64String($bytes)
+          
+          $headers = @{
+              Authorization = "Basic $base64"
+          }
           
           try {
-              Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
-              Write-Host "##[section]DÉPLOIEMENT RÉUSSI !"
+              Write-Host "Envoi du fichier ZIP..."
+              Invoke-RestMethod -Uri $fullUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
+              Write-Host "##[section]DÉPLOIEMENT TERMINÉ AVEC SUCCÈS"
           }
           catch {
-              $msg = $_.Exception.Message
-              Write-Host "##[warning] OAuth a échoué ($msg). Tentative via AZ_USER..."
-              $pair = "$(AZ_USER):$(AZ_PWD)"
-              $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
-              $base64 = [Convert]::ToBase64String($bytes)
-              $headersSecours = @{ Authorization = "Basic $base64" }
-              try {
-                  Invoke-RestMethod -Uri $url -Method Post -Headers $headersSecours -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
-                  Write-Host "##[section]DÉPLOIEMENT RÉUSSI via identifiants classiques !"
+              Write-Host "##[error] ÉCHEC DU DÉPLOIEMENT : $($_.Exception.Message)"
+              if ($_.Exception.Response) {
+                  Write-Host "Détails erreur: $($_.Exception.Response.StatusCode)"
               }
-              catch {
-                  Write-Host "##[error] ÉCHEC : $($_.Exception.Message)"
-                  exit 1
-              }
+              exit 1
           }
       env:
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        # MAPPAGE OBLIGATOIRE DES SECRETS
+        DEPLOY_USER: $(AZ_USER)
+        DEPLOY_PWD: $(AZ_PWD)
