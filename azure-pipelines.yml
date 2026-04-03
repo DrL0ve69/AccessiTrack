@@ -52,7 +52,6 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: Publier artefact Frontend
       inputs:
-        # On pointe vers le dossier parent 'dist' pour être sûr de tout prendre
         pathToPublish: 'Frontend/Accessitrack.client/dist'
         artifactName: frontend
 
@@ -63,33 +62,32 @@ stages:
   variables:
   - group: accessitrack-secrets
   jobs:
-  - deployment: Deploy_API
-    displayName: Deployer API sur Azure App Service
-    environment: Production
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - download: current
-            artifact: api
+  - job: Deploy_API
+    displayName: Deployer API via Kudu Zip Push
+    steps:
+    - download: current
+      artifact: api
 
-          # AJOUTE LE TEST ICI
-          - powershell: |
-              # On utilise Pipeline.Workspace pour être cohérent avec le download
-              $path = "$(Pipeline.Workspace)\profile.publishsettings"
-              $content = @"
-              $(AZURE_WEBAPP_PUBLISH_PROFILE)
-              "@
-              Set-Content -Path $path -Value $content
-              Write-Host "Fichier de profil créé avec succès à l'emplacement : $path"
-            displayName: 'Créer fichier de configuration temporaire'
-
-          - task: AzureWebApp@1
-            displayName: 'Deployer via Fichier de Profil'
-            inputs:
-              connectionType: 'publishProfile'
-              publishProfile: '$(Pipeline.Workspace)\profile.publishsettings'
-              appType: 'webApp'
-              appName: 'accessitrack-api-dea0b3dgddg7eng0'
-              package: '$(Pipeline.Workspace)\api'
-              deploymentMethod: 'zipDeploy'
+    - powershell: |
+        # 1. Extraire les identifiants du profil de publication (Secret Library)
+        $xml = [xml]'$(AZURE_WEBAPP_PUBLISH_PROFILE)'
+        $profile = $xml.publishData.publishProfile | Where-Object { $_.publishMethod -eq "ZipDeploy" -or $_.publishMethod -eq "MSDeploy" }
+        
+        $userName = $profile.userName
+        $password = $profile.userPWD
+        $apiUrl = "https://$($profile.publishUrl)/api/zipdeploy"
+        
+        # 2. Créer l'en-tête d'authentification Basic
+        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $userName, $password)))
+        
+        # 3. Compresser le dossier API en ZIP (si ce n'est pas déjà fait)
+        $zipPath = "$(Pipeline.Workspace)\api_deploy.zip"
+        if (Test-Path $zipPath) { Remove-Item $zipPath }
+        Compress-Archive -Path "$(Pipeline.Workspace)\api\*" -DestinationPath $zipPath
+        
+        # 4. Envoyer le ZIP directement à Azure
+        Write-Host "Déploiement en cours vers $apiUrl ..."
+        Invoke-RestMethod -Uri $apiUrl -Method Post -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -InFile $zipPath -ContentType "application/zip"
+        
+        Write-Host "Déploiement réussi !"
+      displayName: 'Déployer API (Direct Zip Push)'
