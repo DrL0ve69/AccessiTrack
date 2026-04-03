@@ -42,7 +42,8 @@ stages:
       displayName: 'Installer Node.js'
       inputs:
         versionSpec: $(nodeVersion)
-    - script: |
+    # SOLUTION ICI : Utilisation de powershell au lieu de script pour éviter l'arrêt prématuré sous Windows
+    - powershell: |
         cd Frontend/Accessitrack.client
         npm install
         npx ng build --configuration production
@@ -50,7 +51,6 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: 'Publier artefact Frontend'
       inputs:
-        # ON AJOUTE LE SOUS-DOSSIER QUE TON LOG INDIQUE
         pathToPublish: 'Frontend/Accessitrack.client/dist/Accessitrack.client'
         artifactName: frontend
 
