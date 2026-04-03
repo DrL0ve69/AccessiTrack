@@ -11,7 +11,7 @@ trigger:
       - dev        # ← ta branche s'appelle dev, pas develop
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: Default
 
 variables:
   buildConfiguration: 'Release'
@@ -108,28 +108,37 @@ stages:
 
 # ============================================================
 # STAGE 2 : DÉPLOIEMENT PRODUCTION
-# Uniquement sur la branche main + approbation manuelle
+# Méthode : Publish Profile (sans droits Entra requis)
 # ============================================================
-# - stage: Deploy_Production
-#   displayName: '🚀 Déploiement Production'
-#   dependsOn: Build_And_Test
-#   condition: |
-#     and(
-#       succeeded(),
-#       eq(variables['Build.SourceBranch'], 'refs/heads/main')
-#     )
-#   jobs:
-#   - deployment: Deploy_API
-#     displayName: 'Déployer API sur Azure App Service'
-#     environment: 'Production'
-#     strategy:
-#       runOnce:
-#         deploy:
-#           steps:
-#           - task: AzureWebApp@1
-#             displayName: '🚀 Déployer sur Azure App Service'
-#             inputs:
-#               azureSubscription: 'AccessiTrack-ServiceConnection'
-#               appType: 'webApp'
-#               appName: 'accessitrack-api'
-#               package: '$(Pipeline.Workspace)/api'
+- stage: Deploy_Production
+  displayName: '🚀 Déploiement Production'
+  dependsOn: Build_And_Test
+  condition: |
+    and(
+      succeeded(),
+      eq(variables['Build.SourceBranch'], 'refs/heads/main')
+    )
+  variables:
+    - group: accessitrack-secrets   # ← charge le Variable Group
+
+  jobs:
+  - deployment: Deploy_API
+    displayName: 'Déployer API sur Azure App Service'
+    environment: 'Production'       # ← approbation manuelle configurée ici
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # Télécharge l'artefact produit par le job Backend
+          - download: current
+            artifact: api
+
+          - task: AzureWebApp@1
+            displayName: '🚀 Déployer sur accessitrack-api'
+            inputs:
+              azureSubscription: ''   # ← Laisser vide avec cette méthode
+              appType: 'webAppLinux'
+              appName: 'accessitrack-api'
+              package: '$(Pipeline.Workspace)/api/**/*.zip'
+              publishProfileContent: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
