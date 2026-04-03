@@ -61,7 +61,7 @@ stages:
   - group: accessitrack-secrets
   jobs:
   - job: Deploy_API
-    displayName: 'Deployer API via OAuth'
+    displayName: 'Deployer API via Kudu'
     steps:
     - download: current
       artifact: api
@@ -76,36 +76,43 @@ stages:
         replaceExistingArchive: true
 
     - task: PowerShell@2
-      displayName: 'Push Zip to Azure (OAuth)'
+      displayName: 'Push Zip to Azure'
       inputs:
         targetType: 'inline'
         script: |
-          # 1. On récupère le jeton système (OAuth) au lieu du mot de passe
-          $token = "$env:SYSTEM_ACCESSTOKEN"
-          $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$token"))
-          
-          # 2. Nettoyage de l'URL (au cas où il y a un ':' ou un '.' au début dans ta Library)
+          # 1. Préparation de l'URL propre
           $rawUrl = "$(AZ_URL)"
           $cleanUrl = $rawUrl.Trim().TrimStart('.').TrimStart(':').Replace("https://", "")
           $url = "https://$cleanUrl/api/zipdeploy"
           
-          $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
+          # 2. Tentative avec OAuth Token (Plus robuste que le mot de passe)
+          $token = "$env:SYSTEM_ACCESSTOKEN"
+          $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$token"))
           $headers = @{ Authorization = "Basic $base64AuthInfo" }
           
-          Write-Host "Tentative de déploiement vers $url..."
+          $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
+          Write-Host "Envoi vers $url ..."
           
           try {
               Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
               Write-Host "##[section]DÉPLOIEMENT RÉUSSI !"
           }
           catch {
-              $msg = $_.Exception.Message
-              Write-Host "##[error] Erreur : $msg"
-              if ($_.Exception.Response) {
-                  $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                  Write-Host "##[error] Détails serveur : $($reader.ReadToEnd())"
+              Write-Host "##[warning] OAuth a échoué, tentative avec identifiants classiques..."
+              $pair = "$(AZ_USER):$(AZ_PWD)"
+              $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+              $base64 = [Convert]::ToBase64String($bytes)
+              $headers = @{ Authorization = "Basic $base64" }
+              
+              try {
+                  Invoke-RestMethod -Uri $url -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
+                  Write-Host "##[section]DÉPLOIEMENT RÉUSSI (via Basic Auth) !"
               }
-              exit 1
+              catch {
+                  $msg = $_.Exception.Message
+                  Write-Host "##[error] ÉCHEC FINAL : $msg"
+                  exit 1
+              }
           }
       env:
         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
