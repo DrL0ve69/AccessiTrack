@@ -68,8 +68,8 @@ stages:
           - task: AzureWebApp@1
             displayName: Deployer sur accessitrack-api
             inputs:
-              azureSubscription: ''
               appType: webApp
               appName: accessitrack-api-dea0b3dgddg7eng0
               package: $(Pipeline.Workspace)/api
+              deploymentMethod: zipDeploy
               publishProfileContent: $(AZURE_WEBAPP_PUBLISH_PROFILE)
