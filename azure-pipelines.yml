@@ -72,40 +72,36 @@ stages:
         $userName = '$(AZ_USER)'
         $password = '$(AZ_PWD)'
         $apiUrl = "https://$(AZ_URL)/api/zipdeploy"
-        
-        # 1. Préparation des chemins
         $sourceDir = "$(Pipeline.Workspace)\api"
-        $zipPath = "$(Pipeline.Workspace)\deploy.zip" # Nom plus simple
-        
-        # 2. Nettoyage si un ancien ZIP existe
-        if (Test-Path $zipPath) { 
-            Remove-Item $zipPath -Force -ErrorAction SilentlyContinue 
-        }
+        $zipPath = "$(Pipeline.Workspace)\deploy.zip"
 
-        # 3. Compression optimisée
-        Write-Host "Compression du contenu de $sourceDir..."
-        # On se déplace dans le dossier pour que le ZIP ne contienne pas le dossier 'api' lui-même
+        # --- DIAGNOSTIC ---
+        Write-Host "Contenu du dossier à déployer :"
+        Get-ChildItem -Path $sourceDir | Select-Object Name
+        
+        if (-not (Test-Path "$sourceDir\web.config")) {
+            Write-Warning "ATTENTION : web.config manquant dans $sourceDir ! Le déploiement risque d'échouer."
+        }
+        # ------------------
+
+        if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+
         Push-Location $sourceDir
         Compress-Archive -Path * -DestinationPath $zipPath -Force
         Pop-Location
 
-        # 4. Authentification
         $base64Auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $userName, $password)))
         $headers = @{ Authorization = "Basic $base64Auth" }
 
-        # 5. Envoi avec diagnostic
-        Write-Host "Envoi vers Azure (Zip Push)..."
         try {
             Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
             Write-Host "TERMINÉ : L'API a été déployée !"
         }
         catch {
-            $errorMessage = $_.Exception.Message
-            Write-Host "ERREUR : $errorMessage"
             if ($_.Exception.Response) {
                 $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
                 Write-Host "Détails serveur : $($reader.ReadToEnd())"
             }
-            exit 1
+            throw $_
         }
-      displayName: 'Déployer API (Fix 400)'
+      displayName: 'Déployer API (Diagnostic + Fix)'
