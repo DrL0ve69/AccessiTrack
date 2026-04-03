@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
 using AccessiTrack.Domain.Interfaces;
 using AccessiTrack.Infrastructure.Persistence;
 using AccessiTrack.Infrastructure.Persistence.Repositories;
@@ -24,6 +23,8 @@ public static class DependencyInjection
                     typeof(ApplicationDbContext).Assembly.FullName)));
 
         services.AddScoped<IProjectRepository, ProjectRepository>();
+        services.AddScoped<IAuditRepository, AuditRepository>();
+        services.AddScoped<IViolationRepository, ViolationRepository>();
 
         return services;
     }
