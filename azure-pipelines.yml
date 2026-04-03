@@ -45,14 +45,13 @@ stages:
     - script: |
         cd Frontend/Accessitrack.client
         npm install
-        # ON FORCE LA SORTIE DANS LE DOSSIER DIST DIRECTEMENT
-        npx ng build --configuration production --output-path=dist
+        npx ng build --configuration production
       displayName: 'npm install et ng build'
     - task: PublishBuildArtifacts@1
       displayName: 'Publier artefact Frontend'
       inputs:
-        # CE CHEMIN DOIT MAINTENANT EXISTER GRACE A --output-path=dist
-        pathToPublish: 'Frontend/Accessitrack.client/dist'
+        # ON AJOUTE LE SOUS-DOSSIER QUE TON LOG INDIQUE
+        pathToPublish: 'Frontend/Accessitrack.client/dist/Accessitrack.client'
         artifactName: frontend
 
 - stage: Deploy_Production
