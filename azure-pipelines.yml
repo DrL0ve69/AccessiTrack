@@ -69,25 +69,52 @@ stages:
       artifact: api
 
     - powershell: |
-        # 1. Extraire les identifiants du profil de publication (Secret Library)
-        $xml = [xml]'$(AZURE_WEBAPP_PUBLISH_PROFILE)'
-        $profile = $xml.publishData.publishProfile | Where-Object { $_.publishMethod -eq "ZipDeploy" -or $_.publishMethod -eq "MSDeploy" }
-        
+        # 1. Charger le XML
+        [xml]$xml = @'
+        $(AZURE_WEBAPP_PUBLISH_PROFILE)
+        '@
+
+        # 2. Chercher le profil qui contient les infos de déploiement (souvent le premier ou celui nommé 'Web Deploy')
+        # On essaie de récupérer l'URL et les accès de manière plus flexible
+        $profile = $xml.publishData.publishProfile | Where-Object { $_.publishMethod -ne "ReadOnly" } | Select-Object -First 1
+
+        if (-not $profile) {
+            Write-Error "Impossible de trouver un profil de publication valide dans le secret AZURE_WEBAPP_PUBLISH_PROFILE"
+            exit 1
+        }
+
         $userName = $profile.userName
         $password = $profile.userPWD
-        $apiUrl = "https://$($profile.publishUrl)/api/zipdeploy"
         
-        # 2. Créer l'en-tête d'authentification Basic
-        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $userName, $password)))
+        # Nettoyage de l'URL : on enlève le port (ex: :443) et on s'assure qu'elle commence par https
+        $rawUrl = $profile.publishUrl
+        $cleanUrl = $rawUrl.Split(':')[0]
+        $apiUrl = "https://$cleanUrl/api/zipdeploy"
         
-        # 3. Compresser le dossier API en ZIP (si ce n'est pas déjà fait)
+        Write-Host "Nom d'utilisateur détecté : $userName"
+        Write-Host "URL cible détectée : $apiUrl"
+
+        # 3. Créer l'en-tête d'authentification Basic
+        $pair = "{0}:{1}" -f $userName, $password
+        $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+        $base64 = [Convert]::ToBase64String($bytes)
+        $headers = @{ Authorization = "Basic $base64" }
+
+        # 4. Compresser le dossier API en ZIP
         $zipPath = "$(Pipeline.Workspace)\api_deploy.zip"
-        if (Test-Path $zipPath) { Remove-Item $zipPath }
-        Compress-Archive -Path "$(Pipeline.Workspace)\api\*" -DestinationPath $zipPath
+        if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
         
-        # 4. Envoyer le ZIP directement à Azure
-        Write-Host "Déploiement en cours vers $apiUrl ..."
-        Invoke-RestMethod -Uri $apiUrl -Method Post -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -InFile $zipPath -ContentType "application/zip"
-        
-        Write-Host "Déploiement réussi !"
-      displayName: 'Déployer API (Direct Zip Push)'
+        Write-Host "Compression du dossier : $(Pipeline.Workspace)\api"
+        Compress-Archive -Path "$(Pipeline.Workspace)\api\*" -DestinationPath $zipPath -Force
+
+        # 5. Envoyer le ZIP
+        Write-Host "Envoi du fichier ZIP vers Azure..."
+        try {
+            Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
+            Write-Host "Félicitations ! Le déploiement a réussi."
+        }
+        catch {
+            Write-Error "Le déploiement a échoué : $_"
+            exit 1
+        }
+      displayName: 'Déployer API (Direct Zip Push corrigé)'
