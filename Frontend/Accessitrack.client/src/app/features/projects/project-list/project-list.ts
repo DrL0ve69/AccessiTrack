@@ -7,7 +7,7 @@ import {
   signal
 } from '@angular/core';
 import { ProjectService } from './project-list.service';
-import { NgOptimizedImage } from '@angular/common';
+//import { NgOptimizedImage } from '@angular/common';
 
 interface Project {
   id: string;
@@ -20,7 +20,7 @@ interface Project {
 
 @Component({
   selector: 'app-project-list',
-  imports: [NgOptimizedImage],
+  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section aria-labelledby="projects-heading">
