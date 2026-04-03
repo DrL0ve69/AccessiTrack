@@ -3,65 +3,73 @@ trigger:
     include:
       - main
       - dev
-
 pool:
   name: Default
-
 variables:
   buildConfiguration: Release
   dotnetVersion: 10.0.x
   nodeVersion: 22.x
-
 stages:
-
 - stage: Build_And_Test
   displayName: Build et Tests
   jobs:
-
   - job: Backend
     displayName: Backend .NET 10
     steps:
-
     - task: UseDotNet@2
       displayName: Installer .NET 10
       inputs:
         version: 10.0.x
-
     - script: dotnet restore Backend\AccessiTrack.slnx
       displayName: Restore NuGet packages
-
     - script: dotnet build Backend\AccessiTrack.slnx --configuration Release --no-restore
       displayName: Build solution
-
     - script: dotnet publish Backend\AccessiTrack.API --configuration Release --output $(Build.ArtifactStagingDirectory)\api
       displayName: Publish API
-
     - task: PublishBuildArtifacts@1
       displayName: Publier artefact API
       inputs:
         pathToPublish: $(Build.ArtifactStagingDirectory)\api
         artifactName: api
-
   - job: Frontend
     displayName: Frontend Angular
     steps:
-
     - task: NodeTool@0
       displayName: Installer Node.js
       inputs:
         versionSpec: 22.x
-
     - script: npm install -g @angular/cli
       displayName: Installer Angular CLI
-
     - script: cd Frontend\Accessitrack.client && npm install
       displayName: npm install
-
     - script: cd Frontend\Accessitrack.client && ng build --configuration production
       displayName: ng build production
-
     - task: PublishBuildArtifacts@1
       displayName: Publier artefact Frontend
       inputs:
         pathToPublish: Frontend/Accessitrack.client/dist
         artifactName: frontend
+- stage: Deploy_Production
+  displayName: Deploiement Production
+  dependsOn: Build_And_Test
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  variables:
+  - group: accessitrack-secrets
+  jobs:
+  - deployment: Deploy_API
+    displayName: Deployer API sur Azure App Service
+    environment: Production
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: api
+          - task: AzureWebApp@1
+            displayName: Deployer sur accessitrack-api
+            inputs:
+              azureSubscription: ''
+              appType: webApp
+              appName: accessitrack-api-dea0b3dgddg7eng0
+              package: $(Pipeline.Workspace)/api
+              publishProfileContent: $(AZURE_WEBAPP_PUBLISH_PROFILE)
