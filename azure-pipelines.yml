@@ -18,7 +18,7 @@ variables:
   dotnetVersion: '10.0.x'
   nodeVersion: '22.x'
   backendPath: 'Backend'
-  frontendPath: 'Frontend/accessitrack-client'
+  frontendPath: 'Frontend/AccessiTrack.Client'
 
 stages:
 
