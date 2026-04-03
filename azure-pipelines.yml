@@ -79,6 +79,6 @@ stages:
               connectionType: 'publishProfile'
               publishProfile: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
               appType: 'webApp'
-              appName: 'accessitrack-api-dea0b3dgddg7eng0'
+              appName: 'accessitrack-api'
               package: '$(Pipeline.Workspace)/api'
               deploymentMethod: 'zipDeploy'
