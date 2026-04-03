@@ -64,14 +64,17 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: api
-          
+            artifact: api     
           - task: AzureWebApp@1
             displayName: 'Deployer sur accessitrack-api'
             inputs:
-              # MODIFICATION ICI : On change le type de connexion
-              connectionType: 'publishProfile' 
+              # On définit le type de connexion AVANT toute chose
+              connectionType: 'publishProfile'
+              # On donne le contenu du secret XML
               publishProfileContent: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
+              # IMPORTANT: On laisse azureSubscription vide explicitement
+              azureSubscription: ''
               appType: 'webApp'
               appName: 'accessitrack-api-dea0b3dgddg7eng0'
+              # On pointe vers le dossier de l'artefact téléchargé juste avant
               package: '$(Pipeline.Workspace)/api'
