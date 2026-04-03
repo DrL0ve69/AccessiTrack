@@ -1,88 +1,94 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 1rem;
+      background: #000;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0 0 4px 4px;
+      z-index: 9999;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
+    nav a {
+      margin-right: 1rem;
+      padding: 0.5rem;
+    }
+    nav a.active-link {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+  `],
   template: `
-    <!-- 
-      skip-link : permet aux utilisateurs clavier/lecteurs d'écran
-      de sauter directement au contenu principal (WCAG 2.4.1)
-    -->
-    <a 
-      class="skip-link" 
-      href="#main-content"
-      aria-label="Aller au contenu principal">
+    <!-- WCAG 2.4.1 — Skip to main content -->
+    <a class="skip-link" href="#main-content">
       Aller au contenu principal
     </a>
 
     <header role="banner">
       <nav role="navigation" aria-label="Navigation principale">
-        <!-- Navigation ici -->
+        <a routerLink="/dashboard"
+           routerLinkActive="active-link"
+           [routerLinkActiveOptions]="{ exact: true }"
+           aria-label="Aller au tableau de bord">
+          Tableau de bord
+        </a>
+        <a routerLink="/projects"
+           routerLinkActive="active-link"
+           aria-label="Aller à la liste des projets">
+          Projets
+        </a>
+        <a routerLink="/projects/new"
+           routerLinkActive="active-link"
+           aria-label="Créer un nouveau projet">
+          + Nouveau projet
+        </a>
       </nav>
     </header>
 
-    <main id="main-content" role="main" tabindex="-1">
+    <!-- tabindex="-1" permet au focus d'être déplacé ici par JS -->
+    <main id="main-content" tabindex="-1" role="main">
       <router-outlet />
     </main>
   `,
-  styles: [`
-    .skip-link {
-      position: absolute;
-      top: -100%;
-      left: 0;
-      background: #000;
-      color: #fff;
-      padding: 8px 16px;
-      z-index: 9999;
-      
-      /* Visible uniquement au focus clavier — WCAG 2.4.7 */
-      &:focus {
-        top: 0;
-      }
-    }
-  `]
 })
 export class AppComponent {
-  // ✅ inject() au lieu du constructeur
   private readonly router = inject(Router);
   private readonly liveAnnouncer = inject(LiveAnnouncer);
 
   constructor() {
-    // ✅ takeUntilDestroyed évite les fuites mémoire
-    // Se désabonne automatiquement quand le composant est détruit
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        takeUntilDestroyed()
+        takeUntilDestroyed(),
       )
       .subscribe((event: NavigationEnd) => {
-        // ✅ Annonce les changements de page aux lecteurs d'écran
-        // Critique pour les SPA — sans ça, NVDA/JAWS ne détectent
-        // pas le changement de page (pas de rechargement complet)
+        // Annonce la navigation aux lecteurs d'écran — critique pour les SPA
         this.liveAnnouncer.announce(
-          `Page chargée : ${this.getPageTitle(event.url)}`,
-          'polite'  // 'polite' = attend que l'utilisateur ait fini de lire
+          `Navigation vers : ${document.title}`,
+          'polite',
         );
-
-        // ✅ Ramène le focus sur le contenu principal après navigation
-        // Sans ça, le focus reste sur le lien cliqué (mauvaise UX clavier)
-        const mainContent = document.getElementById('main-content');
-        mainContent?.focus();
+        // Remet le focus sur le contenu principal
+        const main = document.getElementById('main-content');
+        main?.focus();
       });
-  }
-
-  private getPageTitle(url: string): string {
-    const routes: Record<string, string> = {
-      '/': 'Tableau de bord',
-      '/projects': 'Liste des projets',
-      '/audits': 'Audits',
-    };
-    return routes[url] ?? 'Nouvelle page';
   }
 }
