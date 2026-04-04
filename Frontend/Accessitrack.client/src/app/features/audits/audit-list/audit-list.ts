@@ -56,11 +56,11 @@ import { Audit } from '../../../core/models/audit.model';
 
                 <p>
                   Violations :
-                  <strong>{{ audit.violations?.length ?? 0 }}</strong>
+                  <strong>{{ audit.totalViolations }}</strong>
                   dont
                   <strong class="critical"
                           [attr.aria-label]="criticalCount(audit) + ' violations critiques'">
-                    {{ criticalCount(audit) }} critiques
+                    {{ audit.criticalViolations }} critiques
                   </strong>
                 </p>
 
