@@ -2,8 +2,8 @@
   <h1 id="violation-form-heading">Nouvelle violation WCAG</h1>
 
   @if (serverError()) {
-    <div role="alert" aria-live="assertive" class="error-banner">
-      <p>{{ serverError() }}</p>
+    <div role="alert" class="error-banner">
+      <p><strong>Erreur serveur :</strong> {{ serverError() }}</p>
     </div>
   }
 
@@ -31,7 +31,7 @@
     </div>
 
     <div class="form-group">
-      <label for="description">Description <span class="required-indicator">*</span></label>
+      <label for="description">Description de la violation <span class="required-indicator">*</span></label>
       <textarea id="description" formControlName="description" rows="4"></textarea>
       @if (isInvalid(form.controls.description)) {
         <span class="field-error">La description est obligatoire.</span>
@@ -39,18 +39,21 @@
     </div>
 
     <fieldset class="form-group">
-      <legend>Gravité <span class="required-indicator">*</span></legend>
+      <legend>Gravité de l'impact <span class="required-indicator">*</span></legend>
       @for (option of severityOptions; track option.value) {
         <div class="radio-option">
           <input [id]="'severity-' + option.value" type="radio" formControlName="severity" [value]="option.value">
-          <label [for]="'severity-' + option.value">{{ option.label }}</label>
+          <label [for]="'severity-' + option.value">
+            {{ option.label }}
+            <span class="field-hint">{{ option.description }}</span>
+          </label>
         </div>
       }
     </fieldset>
 
     <div class="form-actions">
-      <button type="submit" [disabled]="isSubmitting() || form.invalid">
-        @if (isSubmitting()) { Enregistrement... } @else { Enregistrer }
+      <button type="submit" [disabled]="isSubmitting() || form.invalid" [class.loading]="isSubmitting()">
+        @if (isSubmitting()) { Enregistrement... } @else { Enregistrer la violation }
       </button>
 
       <a [routerLink]="['/projects', route.snapshot.paramMap.get('projectId'), 'audits']">
