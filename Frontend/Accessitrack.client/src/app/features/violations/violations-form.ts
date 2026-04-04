@@ -23,7 +23,11 @@ export class ViolationFormComponent {
   readonly isSubmitting = signal(false);
   readonly serverError = signal<string | null>(null);
 
-  readonly wcagCriteria: { value: string; label: string }[] = [
+  // Correction : Selon tes routes, 'id' est l'audit et 'projectId' est le projet
+  private readonly auditId = this.route.snapshot.paramMap.get('id') ?? '';
+  private readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
+
+  readonly wcagCriteria = [
     { value: '1.1.1', label: '1.1.1 — Contenu non textuel (Alt text)' },
     { value: '1.3.1', label: '1.3.1 — Information et relations (Structure HTML)' },
     { value: '1.4.1', label: '1.4.1 — Utilisation de la couleur' },
@@ -44,8 +48,8 @@ export class ViolationFormComponent {
   ];
 
   readonly severityOptions: { value: ViolationSeverity; label: string; description: string }[] = [
-    { value: 'Critical', label: 'Critique', description: "Bloque complètement l'accès à une fonctionnalité" },
-    { value: 'Major', label: 'Majeur', description: "Rend l'usage très difficile mais pas impossible" },
+    { value: 'Critical', label: 'Critique', description: "Bloque complètement l'accès" },
+    { value: 'Major', label: 'Majeur', description: "Rend l'usage très difficile" },
     { value: 'Minor', label: 'Mineur', description: 'Gêne mineure, contournement possible' },
   ];
 
@@ -56,10 +60,6 @@ export class ViolationFormComponent {
     description: ['', [Validators.required, Validators.maxLength(2000)]],
     severity: ['' as ViolationSeverity, Validators.required],
   });
-
-  // MODIFICATION : Récupération des deux IDs pour assurer une navigation de retour stable
-  private readonly auditId = this.route.snapshot.paramMap.get('id') ?? '';
-  private readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
 
   isInvalid(control: AbstractControl): boolean {
     return control.invalid && (control.dirty || control.touched);
@@ -84,29 +84,26 @@ export class ViolationFormComponent {
     this.isSubmitting.set(true);
     this.serverError.set(null);
 
-    const { wcagCriterion, wcagCriterionName, htmlElement, description, severity } =
-      this.form.getRawValue();
+    // Construction du payload avec les champs obligatoires pour le backend
+    const payload = {
+      ...this.form.getRawValue(),
+      auditId: this.auditId,
+      isResolved: false // Champ souvent obligatoire pour éviter la 400
+    };
 
-    this.violationService
-      .create({
-        auditId: this.auditId,
-        wcagCriterion,
-        wcagCriterionName,
-        htmlElement,
-        description,
-        severity,
-      })
-      .subscribe({
-        next: () => {
-          this.liveAnnouncer.announce('Violation enregistrée avec succès.', 'polite');
-          // MODIFICATION : Retour explicite à la liste des audits du projet pour éviter le redirect dashboard
-          this.router.navigate(['/projects', this.projectId, 'audits']);
-        },
-        error: (err: unknown) => {
-          const message = err instanceof Error ? err.message : "Erreur lors de l'enregistrement.";
-          this.serverError.set(message);
-          this.isSubmitting.set(false);
-        },
-      });
+    this.violationService.create(payload).subscribe({
+      next: () => {
+        this.liveAnnouncer.announce('Violation enregistrée avec succès.', 'polite');
+        this.router.navigate(['/projects', this.projectId, 'audits']);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        // Extraction du message d'erreur pour aider au diagnostic
+        const msg = err.error?.errors 
+          ? JSON.stringify(err.error.errors) 
+          : (err.error?.message || "Erreur 400 : Données invalides.");
+        this.serverError.set(msg);
+      },
+    });
   }
 }
