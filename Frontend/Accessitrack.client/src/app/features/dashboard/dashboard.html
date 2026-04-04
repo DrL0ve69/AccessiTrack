@@ -1,0 +1,126 @@
+<div class="page-header">
+  <h1>Tableau de bord</h1>
+  <a routerLink="/projects/new" class="btn btn--primary">
+    ➕ Nouveau projet
+  </a>
+</div>
+
+<div class="page-body">
+
+  <!-- Annonce lecteurs d'écran -->
+  <div aria-live="polite" aria-atomic="true" class="sr-only">
+    @if (isLoading()) { Chargement en cours... }
+    @if (!isLoading()) { {{ activeProjects().length }} projets actifs. }
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container" role="status">
+      <div class="spinner" aria-hidden="true"></div>
+      <span>Chargement des données...</span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert--error" role="alert">
+      ⚠️ {{ error() }}
+    </div>
+  }
+
+  @if (!isLoading() && !error()) {
+
+    <!-- Statistiques -->
+    <div class="stats-grid" role="region" aria-label="Statistiques">
+      <div class="stat-card stat-card--primary">
+        <div class="stat-card__label">Projets actifs</div>
+        <div class="stat-card__value" aria-label="{{ activeProjects().length }} projets actifs">
+          {{ activeProjects().length }}
+        </div>
+        <div class="stat-card__trend">
+          <a routerLink="/projects">Voir tous →</a>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card__label">Total audits</div>
+        <div class="stat-card__value">{{ totalAudits() }}</div>
+        <div class="stat-card__trend">Tous projets confondus</div>
+      </div>
+
+      <div class="stat-card stat-card--success">
+        <div class="stat-card__label">Projets archivés</div>
+        <div class="stat-card__value">{{ archivedProjects().length }}</div>
+        <div class="stat-card__trend">Audits complétés</div>
+      </div>
+    </div>
+
+    <!-- Projets récents -->
+    <div class="card">
+      <div class="card__header">
+        <h2 style="font-size: 1rem; font-weight: 600;">Projets récents</h2>
+        <a routerLink="/projects" class="btn btn--ghost" style="font-size: 0.875rem;">
+          Voir tout
+        </a>
+      </div>
+
+      @if (recentProjects().length === 0) {
+        <div class="empty-state">
+          <div class="empty-state__icon">📁</div>
+          <div class="empty-state__title">Aucun projet</div>
+          <div class="empty-state__description">
+            Commencez par créer votre premier projet d'audit.
+          </div>
+          <a routerLink="/projects/new" class="btn btn--primary">
+            Créer un projet
+          </a>
+        </div>
+      } @else {
+        <div class="table-container">
+          <table aria-label="Projets récents">
+            <thead>
+              <tr>
+                <th scope="col">Projet</th>
+                <th scope="col">Client</th>
+                <th scope="col">Audits</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (project of recentProjects(); track project.id) {
+                <tr>
+                  <td>
+                    <strong>{{ project.name }}</strong>
+                    <br>
+                    <small style="color: var(--color-gray-500);">
+                      {{ project.targetUrl }}
+                    </small>
+                  </td>
+                  <td>{{ project.clientName }}</td>
+                  <td>
+                    <span class="badge badge--primary">
+                      {{ project.totalAudits }} audit(s)
+                    </span>
+                  </td>
+                  <td>
+                    <span [class]="project.isArchived ? 'badge badge--gray' : 'badge badge--success'">
+                      {{ project.isArchived ? 'Archivé' : 'Actif' }}
+                    </span>
+                  </td>
+                  <td>
+                    <a [routerLink]="['/projects', project.id, 'audits']"
+                       class="btn btn--outline"
+                       style="padding: 0.375rem 0.75rem; font-size: 0.8rem;"
+                       [attr.aria-label]="'Voir les audits de ' + project.name">
+                      Voir audits →
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+</div>
