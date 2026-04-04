@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+// import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuditService } from '../../../core/services/audit.service';
 import { Audit } from '../../../core/models/audit.model';
 
@@ -113,7 +113,7 @@ export class AuditListComponent {
     this.projectId.set(id);
 
     this.auditService.getByProject(id)
-      .pipe(takeUntilDestroyed())
+//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: data => {
           this.audits.set(data);
@@ -135,13 +135,13 @@ export class AuditListComponent {
   startNewAudit(): void {
     this.isStarting.set(true);
     this.auditService.start({ projectId: this.projectId() })
-      .pipe(takeUntilDestroyed())
+//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
           this.isStarting.set(false);
           // Recharge la liste
           this.auditService.getByProject(this.projectId())
-            .pipe(takeUntilDestroyed())
+//            .pipe(takeUntilDestroyed())
             .subscribe(data => this.audits.set(data));
         },
         error: () => {
@@ -153,7 +153,7 @@ export class AuditListComponent {
 
   completeAudit(audit: Audit): void {
     this.auditService.complete(audit.id)
-      .pipe(takeUntilDestroyed())
+//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
           this.audits.update(list =>
