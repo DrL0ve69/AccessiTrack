@@ -1,175 +1,59 @@
 <section aria-labelledby="violation-form-heading">
   <h1 id="violation-form-heading">Nouvelle violation WCAG</h1>
 
-  <!-- Erreur serveur -->
   @if (serverError()) {
     <div role="alert" aria-live="assertive" class="error-banner">
       <p>{{ serverError() }}</p>
     </div>
   }
 
-  <form
-    [formGroup]="form"
-    (ngSubmit)="submit()"
-    novalidate
-    aria-describedby="violation-form-heading"
-  >
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
 
-    <!-- ============================================
-         CHAMP 1 : Critère WCAG
-         ============================================ -->
     <div class="form-group">
-      <label for="wcagCriterion">
-        Critère WCAG
-        <span class="required-indicator" aria-label="champ obligatoire">*</span>
-      </label>
-      <select
-        id="wcagCriterion"
-        formControlName="wcagCriterion"
-        aria-required="true"
-        [attr.aria-invalid]="isInvalid(form.controls.wcagCriterion)"
-        aria-describedby="criterion-error"
-        (change)="onCriterionChange($event)"
-      >
+      <label for="wcagCriterion">Critère WCAG <span class="required-indicator">*</span></label>
+      <select id="wcagCriterion" formControlName="wcagCriterion" (change)="onCriterionChange($event)">
         <option value="" disabled>-- Sélectionnez un critère --</option>
         @for (criterion of wcagCriteria; track criterion.value) {
           <option [value]="criterion.value">{{ criterion.label }}</option>
         }
       </select>
-
       @if (isInvalid(form.controls.wcagCriterion)) {
-        <span id="criterion-error" role="alert" aria-live="polite" class="field-error">
-          Le critère WCAG est obligatoire.
-        </span>
+        <span class="field-error">Le critère WCAG est obligatoire.</span>
       }
     </div>
 
-    <!-- ============================================
-         CHAMP 2 : Élément HTML
-         ============================================ -->
     <div class="form-group">
-      <label for="htmlElement">
-        Élément HTML problématique
-        <span class="required-indicator" aria-label="champ obligatoire">*</span>
-      </label>
-      <input
-        id="htmlElement"
-        type="text"
-        formControlName="htmlElement"
-        placeholder="ex: &lt;img src='logo.png'&gt;"
-        aria-required="true"
-        [attr.aria-invalid]="isInvalid(form.controls.htmlElement)"
-        aria-describedby="html-error html-hint"
-      />
-      <span id="html-hint" class="field-hint">
-        Copiez l'élément HTML exact qui cause la violation.
-      </span>
+      <label for="htmlElement">Élément HTML problématique <span class="required-indicator">*</span></label>
+      <input id="htmlElement" type="text" formControlName="htmlElement" placeholder="ex: <img src='logo.png'>">
       @if (isInvalid(form.controls.htmlElement)) {
-        <span id="html-error" role="alert" aria-live="polite" class="field-error">
-          @if (form.controls.htmlElement.hasError('required')) {
-            L'élément HTML est obligatoire.
-          }
-          @if (form.controls.htmlElement.hasError('maxlength')) {
-            L'élément HTML ne peut pas dépasser 500 caractères.
-          }
-        </span>
+        <span class="field-error">L'élément HTML est obligatoire (max 500).</span>
       }
     </div>
 
-    <!-- ============================================
-         CHAMP 3 : Description
-         ============================================ -->
     <div class="form-group">
-      <label for="description">
-        Description de la violation
-        <span class="required-indicator" aria-label="champ obligatoire">*</span>
-      </label>
-      <textarea
-        id="description"
-        formControlName="description"
-        rows="4"
-        placeholder="Décrivez pourquoi cet élément viole la norme WCAG et quel est l'impact pour l'utilisateur..."
-        aria-required="true"
-        [attr.aria-invalid]="isInvalid(form.controls.description)"
-        aria-describedby="description-error description-hint"
-      ></textarea>
-      <span id="description-hint" class="field-hint">
-        Maximum 2000 caractères.
-        Actuellement : {{ form.controls.description.value.length }} / 2000
-      </span>
+      <label for="description">Description <span class="required-indicator">*</span></label>
+      <textarea id="description" formControlName="description" rows="4"></textarea>
       @if (isInvalid(form.controls.description)) {
-        <span id="description-error" role="alert" aria-live="polite" class="field-error">
-          @if (form.controls.description.hasError('required')) {
-            La description est obligatoire.
-          }
-          @if (form.controls.description.hasError('maxlength')) {
-            La description ne peut pas dépasser 2000 caractères.
-          }
-        </span>
+        <span class="field-error">La description est obligatoire.</span>
       }
     </div>
 
-    <!-- ============================================
-         CHAMP 4 : Gravité
-         ============================================ -->
     <fieldset class="form-group">
-      <legend>
-        Gravité de la violation
-        <span class="required-indicator" aria-label="champ obligatoire">*</span>
-      </legend>
-
+      <legend>Gravité <span class="required-indicator">*</span></legend>
       @for (option of severityOptions; track option.value) {
         <div class="radio-option">
-          <input
-            [id]="'severity-' + option.value"
-            type="radio"
-            formControlName="severity"
-            [value]="option.value"
-            [attr.aria-describedby]="'severity-desc-' + option.value"
-          />
-          <label [for]="'severity-' + option.value">
-            {{ option.label }}
-          </label>
-          <span
-            [id]="'severity-desc-' + option.value"
-            class="field-hint"
-          >
-            {{ option.description }}
-          </span>
+          <input [id]="'severity-' + option.value" type="radio" formControlName="severity" [value]="option.value">
+          <label [for]="'severity-' + option.value">{{ option.label }}</label>
         </div>
-      }
-
-      @if (isInvalid(form.controls.severity)) {
-        <span role="alert" aria-live="polite" class="field-error">
-          La gravité est obligatoire.
-        </span>
       }
     </fieldset>
 
-    <!-- ============================================
-         ACTIONS
-         ============================================ -->
     <div class="form-actions">
-      <button
-        type="submit"
-        [attr.aria-disabled]="isSubmitting() || form.invalid"
-        [attr.aria-label]="isSubmitting()
-          ? 'Enregistrement en cours...'
-          : 'Enregistrer la violation'"
-        [class.loading]="isSubmitting()"
-      >
-        @if (isSubmitting()) {
-          <span aria-hidden="true">⏳</span> Enregistrement...
-        } @else {
-          Enregistrer la violation
-        }
+      <button type="submit" [disabled]="isSubmitting() || form.invalid">
+        @if (isSubmitting()) { Enregistrement... } @else { Enregistrer }
       </button>
 
-      <a
-        [routerLink]="['../..']"
-        [relativeTo]="route"
-        aria-label="Annuler et retourner à la liste des audits"
-      >
+      <a [routerLink]="['/projects', route.snapshot.paramMap.get('projectId'), 'audits']">
         Annuler
       </a>
     </div>

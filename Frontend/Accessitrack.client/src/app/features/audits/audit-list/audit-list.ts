@@ -8,12 +8,12 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-// import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuditService } from '../../../core/services/audit.service';
 import { Audit } from '../../../core/models/audit.model';
 
 @Component({
   selector: 'app-audit-list',
+  standalone: true,
   imports: [RouterLink, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -38,7 +38,6 @@ import { Audit } from '../../../core/models/audit.model';
       }
 
       @if (!isLoading()) {
-        <!-- Statistiques rapides -->
         <div role="region" aria-label="Statistiques des audits">
           <p>En cours : <strong>{{ inProgressCount() }}</strong></p>
           <p>Complétés : <strong>{{ completedCount() }}</strong></p>
@@ -66,7 +65,7 @@ import { Audit } from '../../../core/models/audit.model';
                 </p>
 
                 <footer>
-                  <a [routerLink]="['/audits', audit.id, 'violations', 'new']"
+                  <a [routerLink]="['/projects', projectId(), 'audits', audit.id, 'violations', 'new']"
                      [attr.aria-label]="'Ajouter une violation à cet audit'">
                     + Violation
                   </a>
@@ -113,7 +112,6 @@ export class AuditListComponent {
     this.projectId.set(id);
 
     this.auditService.getByProject(id)
-//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: data => {
           this.audits.set(data);
@@ -135,13 +133,10 @@ export class AuditListComponent {
   startNewAudit(): void {
     this.isStarting.set(true);
     this.auditService.start({ projectId: this.projectId() })
-//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
           this.isStarting.set(false);
-          // Recharge la liste
           this.auditService.getByProject(this.projectId())
-//            .pipe(takeUntilDestroyed())
             .subscribe(data => this.audits.set(data));
         },
         error: () => {
@@ -153,7 +148,6 @@ export class AuditListComponent {
 
   completeAudit(audit: Audit): void {
     this.auditService.complete(audit.id)
-//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
           this.audits.update(list =>

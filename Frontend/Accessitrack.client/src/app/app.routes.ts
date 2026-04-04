@@ -35,7 +35,7 @@ export const routes: Routes = [
     title: 'Audits — AccessiTrack',
   },
   {
-    path: 'audits/:id/violations/new',
+    path: 'projects/:projectId/audits/:id/violations/new',
     loadComponent: () =>
       import('./features/violations/violations-form')
         .then(m => m.ViolationFormComponent),
