@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
+import { take } from 'rxjs';
 import { ViolationService } from '../../core/services/violation.service';
 import { ViolationSeverity } from '../../core/models/violation.model';
 
@@ -23,34 +24,31 @@ export class ViolationFormComponent {
   readonly isSubmitting = signal(false);
   readonly serverError = signal<string | null>(null);
 
-  // Correction : Selon tes routes, 'id' est l'audit et 'projectId' est le projet
+  // Mapping des IDs depuis l'URL (Projet :projectId / Audit :id)
   private readonly auditId = this.route.snapshot.paramMap.get('id') ?? '';
   private readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
 
+  // Mapping pour l'Enum C# (Minor=0, Major=1, Critical=2)
+  private readonly severityMap: Record<ViolationSeverity, number> = {
+    'Minor': 0,
+    'Major': 1,
+    'Critical': 2
+  };
+
   readonly wcagCriteria = [
     { value: '1.1.1', label: '1.1.1 — Contenu non textuel (Alt text)' },
-    { value: '1.3.1', label: '1.3.1 — Information et relations (Structure HTML)' },
-    { value: '1.4.1', label: '1.4.1 — Utilisation de la couleur' },
+    { value: '1.3.1', label: '1.3.1 — Information et relations (Structure)' },
     { value: '1.4.3', label: '1.4.3 — Contraste (minimum 4.5:1)' },
-    { value: '1.4.4', label: '1.4.4 — Redimensionnement du texte' },
     { value: '2.1.1', label: '2.1.1 — Clavier (navigation complète)' },
-    { value: '2.1.2', label: '2.1.2 — Pas de piège au clavier' },
-    { value: '2.4.1', label: '2.4.1 — Contournement de blocs (Skip link)' },
-    { value: '2.4.3', label: '2.4.3 — Parcours du focus' },
-    { value: '2.4.4', label: '2.4.4 — Fonction du lien' },
     { value: '2.4.7', label: '2.4.7 — Visibilité du focus' },
-    { value: '3.1.1', label: '3.1.1 — Langue de la page' },
     { value: '3.3.1', label: '3.3.1 — Identification des erreurs' },
-    { value: '3.3.2', label: '3.3.2 — Étiquettes ou instructions' },
-    { value: '4.1.1', label: '4.1.1 — Analyse syntaxique (HTML valide)' },
     { value: '4.1.2', label: '4.1.2 — Nom, rôle, valeur (ARIA)' },
-    { value: '4.1.3', label: "4.1.3 — Messages d'état (aria-live)" },
   ];
 
   readonly severityOptions: { value: ViolationSeverity; label: string; description: string }[] = [
-    { value: 'Critical', label: 'Critique', description: "Bloque complètement l'accès" },
-    { value: 'Major', label: 'Majeur', description: "Rend l'usage très difficile" },
-    { value: 'Minor', label: 'Mineur', description: 'Gêne mineure, contournement possible' },
+    { value: 'Critical', label: 'Critique', description: "Bloque l'usage" },
+    { value: 'Major', label: 'Majeur', description: "Usage difficile" },
+    { value: 'Minor', label: 'Mineur', description: 'Gêne légère' },
   ];
 
   readonly form = this.fb.nonNullable.group({
@@ -77,33 +75,42 @@ export class ViolationFormComponent {
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.liveAnnouncer.announce('Le formulaire contient des erreurs.', 'assertive');
+      this.liveAnnouncer.announce('Erreurs dans le formulaire', 'assertive');
       return;
     }
 
     this.isSubmitting.set(true);
     this.serverError.set(null);
 
-    // Construction du payload avec les champs obligatoires pour le backend
+    const raw = this.form.getRawValue();
+
+    // WRAPPER "command" + conversion Severity en Number pour l'API
     const payload = {
-      ...this.form.getRawValue(),
-      auditId: this.auditId,
-      isResolved: false // Champ souvent obligatoire pour éviter la 400
+      command: {
+        auditId: this.auditId,
+        wcagCriterion: raw.wcagCriterion,
+        wcagCriterionName: raw.wcagCriterionName,
+        htmlElement: raw.htmlElement,
+        description: raw.description,
+        severity: this.severityMap[raw.severity],
+        isResolved: false
+      }
     };
 
-    this.violationService.create(payload).subscribe({
-      next: () => {
-        this.liveAnnouncer.announce('Violation enregistrée avec succès.', 'polite');
-        this.router.navigate(['/projects', this.projectId, 'audits']);
-      },
-      error: (err) => {
-        this.isSubmitting.set(false);
-        // Extraction du message d'erreur pour aider au diagnostic
-        const msg = err.error?.errors 
-          ? JSON.stringify(err.error.errors) 
-          : (err.error?.message || "Erreur 400 : Données invalides.");
-        this.serverError.set(msg);
-      },
-    });
+    this.violationService.create(payload)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.liveAnnouncer.announce('Violation créée', 'polite');
+          this.router.navigate(['/projects', this.projectId, 'audits']);
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          // Affiche l'erreur de validation précise du backend
+          const msg = err.error?.errors ? JSON.stringify(err.error.errors) : "Données invalides (400).";
+          this.serverError.set(msg);
+          console.error('Rejet API:', err.error);
+        }
+      });
   }
 }
