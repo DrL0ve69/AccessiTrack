@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-//import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ViolationService } from '../../core/services/violation.service';
 import { ViolationSeverity } from '../../core/models/violation.model';
 
 @Component({
   selector: 'app-violation-form',
+  standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './violation-form.html',
@@ -18,12 +18,11 @@ export class ViolationFormComponent {
   private readonly violationService = inject(ViolationService);
   private readonly router = inject(Router);
   private readonly liveAnnouncer = inject(LiveAnnouncer);
+  readonly route = inject(ActivatedRoute);
 
   readonly isSubmitting = signal(false);
   readonly serverError = signal<string | null>(null);
-  readonly route = inject(ActivatedRoute);
 
-  // Critères WCAG 2.1/2.2 les plus courants — données statiques
   readonly wcagCriteria: { value: string; label: string }[] = [
     { value: '1.1.1', label: '1.1.1 — Contenu non textuel (Alt text)' },
     { value: '1.3.1', label: '1.3.1 — Information et relations (Structure HTML)' },
@@ -45,21 +44,9 @@ export class ViolationFormComponent {
   ];
 
   readonly severityOptions: { value: ViolationSeverity; label: string; description: string }[] = [
-    {
-      value: 'Critical',
-      label: 'Critique',
-      description: "Bloque complètement l'accès à une fonctionnalité",
-    },
-    {
-      value: 'Major',
-      label: 'Majeur',
-      description: "Rend l'usage très difficile mais pas impossible",
-    },
-    {
-      value: 'Minor',
-      label: 'Mineur',
-      description: 'Gêne mineure, contournement possible',
-    },
+    { value: 'Critical', label: 'Critique', description: "Bloque complètement l'accès à une fonctionnalité" },
+    { value: 'Major', label: 'Majeur', description: "Rend l'usage très difficile mais pas impossible" },
+    { value: 'Minor', label: 'Mineur', description: 'Gêne mineure, contournement possible' },
   ];
 
   readonly form = this.fb.nonNullable.group({
@@ -70,19 +57,18 @@ export class ViolationFormComponent {
     severity: ['' as ViolationSeverity, Validators.required],
   });
 
+  // MODIFICATION : Récupération des deux IDs pour assurer une navigation de retour stable
   private readonly auditId = this.route.snapshot.paramMap.get('id') ?? '';
+  private readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
 
   isInvalid(control: AbstractControl): boolean {
     return control.invalid && (control.dirty || control.touched);
   }
 
-  // Quand l'utilisateur choisit un critère WCAG,
-  // on remplit automatiquement le nom du critère
   onCriterionChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     const found = this.wcagCriteria.find((c) => c.value === value);
     if (found) {
-      // Extrait le nom après " — "
       const name = found.label.split(' — ')[1] ?? '';
       this.form.controls.wcagCriterionName.setValue(name);
     }
@@ -91,10 +77,7 @@ export class ViolationFormComponent {
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.liveAnnouncer.announce(
-        'Le formulaire contient des erreurs. Veuillez les corriger.',
-        'assertive',
-      );
+      this.liveAnnouncer.announce('Le formulaire contient des erreurs.', 'assertive');
       return;
     }
 
@@ -113,23 +96,16 @@ export class ViolationFormComponent {
         description,
         severity,
       })
-//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
           this.liveAnnouncer.announce('Violation enregistrée avec succès.', 'polite');
-          this.router.navigate(['../..'], { relativeTo: this.route });
+          // MODIFICATION : Retour explicite à la liste des audits du projet pour éviter le redirect dashboard
+          this.router.navigate(['/projects', this.projectId, 'audits']);
         },
         error: (err: unknown) => {
-          const message =
-            err instanceof Error
-              ? err.message
-              : "Erreur lors de l'enregistrement. Veuillez réessayer.";
+          const message = err instanceof Error ? err.message : "Erreur lors de l'enregistrement.";
           this.serverError.set(message);
           this.isSubmitting.set(false);
-          this.liveAnnouncer.announce(
-            "Erreur lors de l'enregistrement de la violation.",
-            'assertive',
-          );
         },
       });
   }
