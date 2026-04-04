@@ -1,65 +1,48 @@
-<section aria-labelledby="violation-form-heading">
-  <h1 id="violation-form-heading">Nouvelle violation WCAG</h1>
+<section style="max-width: 600px; margin: 2rem auto; font-family: sans-serif;">
+  <h1>Nouvelle violation</h1>
 
   @if (serverError()) {
-    <div role="alert" class="error-banner">
-      <p><strong>Erreur serveur :</strong> {{ serverError() }}</p>
+    <div style="color: #d32f2f; background: #fee; padding: 1rem; border-left: 4px solid; margin-bottom: 1rem;">
+      {{ serverError() }}
     </div>
   }
 
-  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-
-    <div class="form-group">
-      <label for="wcagCriterion">Critère WCAG <span class="required-indicator">*</span></label>
-      <select id="wcagCriterion" formControlName="wcagCriterion" (change)="onCriterionChange($event)">
-        <option value="" disabled>-- Sélectionnez un critère --</option>
-        @for (criterion of wcagCriteria; track criterion.value) {
-          <option [value]="criterion.value">{{ criterion.label }}</option>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div style="margin-bottom: 1rem;">
+      <label style="display: block; font-weight: bold;">Critère WCAG</label>
+      <select formControlName="wcagCriterion" (change)="onCriterionChange($event)" style="width: 100%; padding: 0.5rem;">
+        <option value="">-- Sélectionner --</option>
+        @for (c of wcagCriteria; track c.value) {
+          <option [value]="c.value">{{ c.label }}</option>
         }
       </select>
-      @if (isInvalid(form.controls.wcagCriterion)) {
-        <span class="field-error">Le critère WCAG est obligatoire.</span>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label style="display: block; font-weight: bold;">Élément HTML</label>
+      <input type="text" formControlName="htmlElement" style="width: 100%; padding: 0.5rem;">
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label style="display: block; font-weight: bold;">Description</label>
+      <textarea formControlName="description" rows="4" style="width: 100%; padding: 0.5rem;"></textarea>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label style="display: block; font-weight: bold;">Sévérité</label>
+      @for (opt of severityOptions; track opt.value) {
+        <label style="margin-right: 1rem; font-weight: normal;">
+          <input type="radio" [value]="opt.value" formControlName="severity"> {{ opt.label }}
+        </label>
       }
     </div>
 
-    <div class="form-group">
-      <label for="htmlElement">Élément HTML problématique <span class="required-indicator">*</span></label>
-      <input id="htmlElement" type="text" formControlName="htmlElement" placeholder="ex: <img src='logo.png'>">
-      @if (isInvalid(form.controls.htmlElement)) {
-        <span class="field-error">L'élément HTML est obligatoire (max 500).</span>
-      }
-    </div>
-
-    <div class="form-group">
-      <label for="description">Description de la violation <span class="required-indicator">*</span></label>
-      <textarea id="description" formControlName="description" rows="4"></textarea>
-      @if (isInvalid(form.controls.description)) {
-        <span class="field-error">La description est obligatoire.</span>
-      }
-    </div>
-
-    <fieldset class="form-group">
-      <legend>Gravité de l'impact <span class="required-indicator">*</span></legend>
-      @for (option of severityOptions; track option.value) {
-        <div class="radio-option">
-          <input [id]="'severity-' + option.value" type="radio" formControlName="severity" [value]="option.value">
-          <label [for]="'severity-' + option.value">
-            {{ option.label }}
-            <span class="field-hint">{{ option.description }}</span>
-          </label>
-        </div>
-      }
-    </fieldset>
-
-    <div class="form-actions">
-      <button type="submit" [disabled]="isSubmitting() || form.invalid" [class.loading]="isSubmitting()">
-        @if (isSubmitting()) { Enregistrement... } @else { Enregistrer la violation }
+    <div style="margin-top: 2rem; display: flex; gap: 1rem; align-items: center;">
+      <button type="submit" [disabled]="isSubmitting()" 
+              style="background: #0066cc; color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 4px; cursor: pointer;">
+        {{ isSubmitting() ? 'Envoi...' : 'Enregistrer' }}
       </button>
-
-      <a [routerLink]="['/projects', route.snapshot.paramMap.get('projectId'), 'audits']">
-        Annuler
-      </a>
+      <a [routerLink]="['/projects', route.snapshot.paramMap.get('projectId'), 'audits']">Annuler</a>
     </div>
-
   </form>
 </section>

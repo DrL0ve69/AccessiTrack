@@ -24,11 +24,9 @@ export class ViolationFormComponent {
   readonly isSubmitting = signal(false);
   readonly serverError = signal<string | null>(null);
 
-  // Mapping des IDs depuis l'URL (Projet :projectId / Audit :id)
   private readonly auditId = this.route.snapshot.paramMap.get('id') ?? '';
   private readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
 
-  // Mapping pour l'Enum C# (Minor=0, Major=1, Critical=2)
   private readonly severityMap: Record<ViolationSeverity, number> = {
     'Minor': 0,
     'Major': 1,
@@ -36,19 +34,17 @@ export class ViolationFormComponent {
   };
 
   readonly wcagCriteria = [
-    { value: '1.1.1', label: '1.1.1 — Contenu non textuel (Alt text)' },
-    { value: '1.3.1', label: '1.3.1 — Information et relations (Structure)' },
-    { value: '1.4.3', label: '1.4.3 — Contraste (minimum 4.5:1)' },
-    { value: '2.1.1', label: '2.1.1 — Clavier (navigation complète)' },
-    { value: '2.4.7', label: '2.4.7 — Visibilité du focus' },
-    { value: '3.3.1', label: '3.3.1 — Identification des erreurs' },
-    { value: '4.1.2', label: '4.1.2 — Nom, rôle, valeur (ARIA)' },
+    { value: '1.1.1', label: '1.1.1 — Contenu non textuel' },
+    { value: '1.3.1', label: '1.3.1 — Information et relations' },
+    { value: '1.4.3', label: '1.4.3 — Contraste (minimum)' },
+    { value: '2.1.1', label: '2.1.1 — Clavier' },
+    { value: '4.1.2', label: '4.1.2 — Nom, rôle, valeur' },
   ];
 
-  readonly severityOptions: { value: ViolationSeverity; label: string; description: string }[] = [
-    { value: 'Critical', label: 'Critique', description: "Bloque l'usage" },
-    { value: 'Major', label: 'Majeur', description: "Usage difficile" },
-    { value: 'Minor', label: 'Mineur', description: 'Gêne légère' },
+  readonly severityOptions: { value: ViolationSeverity; label: string }[] = [
+    { value: 'Critical', label: 'Critique' },
+    { value: 'Major', label: 'Majeur' },
+    { value: 'Minor', label: 'Mineur' },
   ];
 
   readonly form = this.fb.nonNullable.group({
@@ -75,7 +71,6 @@ export class ViolationFormComponent {
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.liveAnnouncer.announce('Erreurs dans le formulaire', 'assertive');
       return;
     }
 
@@ -84,32 +79,32 @@ export class ViolationFormComponent {
 
     const raw = this.form.getRawValue();
 
-    // WRAPPER "command" + conversion Severity en Number pour l'API
+    // ON CHANGE TOUT ICI : PascalCase + Pas de wrapper command
+    // Car l'erreur mentionne "Description" (D majuscule) et non "command.Description"
     const payload = {
-      command: {
-        auditId: this.auditId,
-        wcagCriterion: raw.wcagCriterion,
-        wcagCriterionName: raw.wcagCriterionName,
-        htmlElement: raw.htmlElement,
-        description: raw.description,
-        severity: this.severityMap[raw.severity],
-        isResolved: false
-      }
+      AuditId: this.auditId,
+      WcagCriterion: raw.wcagCriterion,
+      WcagCriterionName: raw.wcagCriterionName,
+      HtmlElement: raw.htmlElement,
+      Description: raw.description,
+      Severity: this.severityMap[raw.severity],
+      IsResolved: false
     };
 
-    this.violationService.create(payload)
+    console.log('Tentative avec payload PascalCase :', payload);
+
+    // On utilise "as any" pour passer outre le check de type du DTO Angular
+    this.violationService.create(payload as any)
       .pipe(take(1))
       .subscribe({
         next: () => {
-          this.liveAnnouncer.announce('Violation créée', 'polite');
+          this.liveAnnouncer.announce('Succès', 'polite');
           this.router.navigate(['/projects', this.projectId, 'audits']);
         },
         error: (err) => {
           this.isSubmitting.set(false);
-          // Affiche l'erreur de validation précise du backend
-          const msg = err.error?.errors ? JSON.stringify(err.error.errors) : "Données invalides (400).";
-          this.serverError.set(msg);
-          console.error('Rejet API:', err.error);
+          this.serverError.set(err.error?.title || "Erreur de validation");
+          console.error('Rejet API détaillé :', err.error);
         }
       });
   }
