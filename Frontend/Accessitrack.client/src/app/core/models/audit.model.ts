@@ -9,7 +9,12 @@ export interface Audit {
   readonly completedAt: string | null;
   readonly status: AuditStatus;
   readonly notes: string | null;
-  readonly violations: Violation[];
+
+  readonly totalViolations: number;      // Correspond au JSON
+  readonly criticalViolations: number;   // Correspond au JSON
+  readonly resolvedViolations: number;   // Correspond au JSON
+
+  readonly violations?: Violation[];
 }
 
 export interface CreateAuditDto {
