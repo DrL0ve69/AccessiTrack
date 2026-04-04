@@ -7,7 +7,7 @@ import {
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+// import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProjectService } from '../../../core/services/project.service';
 
 @Component({
@@ -142,6 +142,7 @@ export class ProjectFormComponent {
   private readonly projectService = inject(ProjectService);
   private readonly router = inject(Router);
   private readonly liveAnnouncer = inject(LiveAnnouncer);
+  //private readonly destroyRef = inject(DestroyRef);
 
   readonly isSubmitting = signal(false);
   readonly serverError = signal<string | null>(null);
@@ -175,7 +176,7 @@ export class ProjectFormComponent {
     this.serverError.set(null);
 
     this.projectService.create(this.form.getRawValue())
-      .pipe(takeUntilDestroyed())
+//      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.liveAnnouncer.announce(
