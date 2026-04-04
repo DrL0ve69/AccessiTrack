@@ -1,0 +1,10 @@
+// Les styles viennent de styles.scss global
+// Ajouts spécifiques au dashboard
+
+.stat-card a {
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
