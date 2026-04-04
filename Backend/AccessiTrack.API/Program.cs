@@ -33,10 +33,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseCors("AllowAngular");
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors("AllowAngular");
 app.UseHttpsRedirection();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
