@@ -30,11 +30,11 @@ import { Audit } from '../../../core/models/audit.model';
 
       <div aria-live="polite" aria-atomic="true" class="sr-only">
         @if (isLoading()) { Chargement des audits... }
-        @if (!isLoading()) { {{ audits().length }} audits chargés. }
+        @if (!isLoading()) { {{ audits()?.length ?? 0 }} audits chargés. }
       </div>
 
       @if (error()) {
-        <div role="alert" aria-live="assertive">{{ error() }}</div>
+        <div role="alert" aria-live="assertive" class="error-banner">{{ error() }}</div>
       }
 
       @if (!isLoading()) {
@@ -56,7 +56,7 @@ import { Audit } from '../../../core/models/audit.model';
 
                 <p>
                   Violations :
-                  <strong>{{ audit.violations.length }}</strong>
+                  <strong>{{ audit.violations?.length ?? 0 }}</strong>
                   dont
                   <strong class="critical"
                           [attr.aria-label]="criticalCount(audit) + ' violations critiques'">
@@ -89,6 +89,10 @@ import { Audit } from '../../../core/models/audit.model';
       }
     </section>
   `,
+  styles: [`
+    .error-banner { color: #d32f2f; padding: 1rem; border: 1px solid currentColor; margin: 1rem 0; }
+    .critical { color: #c62828; }
+  `]
 })
 export class AuditListComponent {
   private readonly auditService = inject(AuditService);
@@ -100,21 +104,28 @@ export class AuditListComponent {
   readonly audits = signal<Audit[]>([]);
   readonly projectId = signal<string>('');
 
+  // MODIFICATION : Ajout de vérifications de sécurité dans les computed
   readonly inProgressCount = computed(
-    () => this.audits().filter(a => a.status === 'InProgress').length
+    () => (this.audits() || []).filter(a => a.status === 'InProgress').length
   );
   readonly completedCount = computed(
-    () => this.audits().filter(a => a.status === 'Completed').length
+    () => (this.audits() || []).filter(a => a.status === 'Completed').length
   );
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.projectId.set(id);
 
+    if (!id) {
+      this.error.set("ID de projet manquant dans l'URL.");
+      this.isLoading.set(false);
+      return;
+    }
+
     this.auditService.getByProject(id)
       .subscribe({
         next: data => {
-          this.audits.set(data);
+          this.audits.set(data || []);
           this.isLoading.set(false);
         },
         error: () => {
@@ -125,6 +136,8 @@ export class AuditListComponent {
   }
 
   criticalCount(audit: Audit): number {
+    // MODIFICATION : Sécurisation ici aussi pour éviter le crash si violations est undefined
+    if (!audit.violations) return 0;
     return audit.violations.filter(
       v => v.severity === 'Critical' && !v.isResolved
     ).length;
@@ -137,7 +150,7 @@ export class AuditListComponent {
         next: () => {
           this.isStarting.set(false);
           this.auditService.getByProject(this.projectId())
-            .subscribe(data => this.audits.set(data));
+            .subscribe(data => this.audits.set(data || []));
         },
         error: () => {
           this.error.set('Impossible de démarrer l\'audit.');
