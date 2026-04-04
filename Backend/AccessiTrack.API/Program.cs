@@ -26,7 +26,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngular", policy =>
         policy.WithOrigins(
                 "http://localhost:4200",           // Développement local
-                "https://ton-app.vercel.app")      // Production Vercel
+                "https://accessi-track.vercel.app")      // Production Vercel
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
