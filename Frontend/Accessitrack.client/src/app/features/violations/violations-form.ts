@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+//import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ViolationService } from '../../core/services/violation.service';
 import { ViolationSeverity } from '../../core/models/violation.model';
 
@@ -113,7 +113,7 @@ export class ViolationFormComponent {
         description,
         severity,
       })
-      .pipe(takeUntilDestroyed())
+//      .pipe(takeUntilDestroyed())
       .subscribe({
         next: () => {
           this.liveAnnouncer.announce('Violation enregistrée avec succès.', 'polite');
