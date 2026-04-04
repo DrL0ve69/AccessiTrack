@@ -21,3 +21,14 @@ export interface CreateViolationDto {
   readonly description: string;
   readonly severity: ViolationSeverity;
 }
+
+// Crée une interface pour la commande si elle n'existe pas
+export interface LogViolationCommand {
+  auditId: string;
+  wcagCriterion: string;
+  wcagCriterionName: string;
+  htmlElement: string;
+  description: string;
+  severity: number;
+  isResolved: boolean;
+}
