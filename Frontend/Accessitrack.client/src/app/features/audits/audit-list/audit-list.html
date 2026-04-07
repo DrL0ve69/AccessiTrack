@@ -118,9 +118,9 @@
               </header>
  
               <p>
-                Violations : <strong>{{ audit.violations?.length ?? 0 }}</strong>
-                @if (criticalCount(audit) > 0) {
-                  — <span class="critical">{{ criticalCount(audit) }} critiques</span>
+                Violations : <strong>{{ audit.totalViolations }}</strong>
+                @if (audit.criticalViolations > 0) {
+                  — <span class="critical">{{ audit.criticalViolations }} critiques</span>
                 }
               </p>
  

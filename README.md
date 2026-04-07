@@ -127,6 +127,8 @@ Le pipeline Azure DevOps automatise :
 3. **Deploy** → Azure App Service (API) + Vercel (Angular)
 
 > 📸 *(Capture d'écran du pipeline à ajouter ici)*
+> <img width="1910" height="733" alt="image" src="https://github.com/user-attachments/assets/7fbab593-9892-46d5-b849-a31ac432ac5a" />
+
 
 ---
 

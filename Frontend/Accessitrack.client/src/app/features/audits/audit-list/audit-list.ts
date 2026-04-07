@@ -61,8 +61,8 @@ export class AuditListComponent {
   }
 
   criticalCount(audit: Audit): number {
-    if (!audit.violations) return 0;
-    return audit.violations.filter((v) => v.severity === 'Critical' && !v.isResolved).length;
+    if (!audit.criticalViolations) return 0;
+    return audit.criticalViolations;
   }
 
   /**
