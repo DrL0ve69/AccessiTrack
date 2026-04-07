@@ -1,0 +1,80 @@
+<div class="admin-dashboard">
+  <header class="admin-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1>Panneau d'administration</h1>
+        @if (user()) {
+          <p>Connecté en tant que <strong>{{ user()?.email }}</strong> ({{ user()?.role }})</p>
+        }
+      </div>
+      <div class="header-actions">
+        <a routerLink="/dashboard" class="btn-secondary">Tableau de bord</a>
+        <button (click)="logout()" class="btn-danger">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-content">
+    <section class="stats-section">
+      <div class="stat-card">
+        <span class="stat-value">{{ projectCount() }}</span>
+        <span class="stat-label">Projets totaux</span>
+      </div>
+    </section>
+
+    <section class="projects-section">
+      <div class="section-header">
+        <h2>Tous les projets</h2>
+        <a routerLink="/projects/new" class="btn-primary">Nouveau projet</a>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-state">Chargement des projets...</div>
+      } @else if (error()) {
+        <div class="error-state" role="alert">{{ error() }}</div>
+      } @else if (projects().length === 0) {
+        <div class="empty-state">
+          <p>Aucun projet créé.</p>
+          <a routerLink="/projects/new" class="btn-primary">Créer un projet</a>
+        </div>
+      } @else {
+        <div class="projects-table-container">
+          <table class="projects-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>URL cible</th>
+                <th>Client</th>
+                <th>Créé le</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (project of projects(); track project.id) {
+                <tr>
+                  <td>{{ project.name }}</td>
+                  <td>
+                    <a [href]="project.targetUrl" target="_blank" rel="noopener">{{ project.targetUrl }}</a>
+                  </td>
+                  <td>{{ project.clientName || '—' }}</td>
+                  <td>{{ project.createdAt | date:'dd/MM/yyyy' }}</td>
+                  <td>
+                    @if (project.isArchived) {
+                      <span class="badge badge-archived">Archivé</span>
+                    } @else {
+                      <span class="badge badge-active">Actif</span>
+                    }
+                  </td>
+                  <td>
+                    <a [routerLink]="['/projects', project.id, 'audits']" class="btn-link">Voir audits</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </main>
+</div>

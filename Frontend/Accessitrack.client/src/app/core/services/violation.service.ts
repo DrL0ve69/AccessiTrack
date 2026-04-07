@@ -9,8 +9,8 @@ export class ViolationService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/api/violations`;
 
-  create(request: { command: LogViolationCommand }): Observable<Violation> {
-    return this.http.post<Violation>(this.apiUrl, request);
+  create(command: LogViolationCommand): Observable<Violation> {
+    return this.http.post<Violation>(this.apiUrl, command);
   }
 
   resolve(id: string, note: string): Observable<void> {

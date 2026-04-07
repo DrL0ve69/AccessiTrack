@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Audit, CreateAuditDto } from '../models/audit.model';
+import { Audit, CreateAuditDto, AutomaticAuditResult } from '../models/audit.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +15,16 @@ export class AuditService {
 
   start(dto: CreateAuditDto): Observable<string> {
     return this.http.post<string>(this.apiUrl, dto);
+  }
+
+  /**
+   * Starts an automatic accessibility audit that scans the project's TargetUrl
+   * and detects WCAG violations automatically.
+   */
+  startAutomatic(projectId: string): Observable<AutomaticAuditResult> {
+    return this.http.post<AutomaticAuditResult>(`${this.apiUrl}/automatic`, {
+      projectId,
+    });
   }
 
   complete(id: string): Observable<void> {

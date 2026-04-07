@@ -1,0 +1,77 @@
+<div class="login-container">
+  <div class="login-card">
+    <header class="login-header">
+      <h1>AccessiTrack</h1>
+      <p>Connexion à votre compte</p>
+    </header>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      @if (errorMessage()) {
+        <div class="error-alert" role="alert">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <div class="form-field">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="votre@email.com"
+          autocomplete="email"
+          [attr.aria-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          [attr.aria-describedby]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched ? 'email-error' : null"
+        />
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <span id="email-error" class="error-message">
+            @if (loginForm.get('email')?.hasError('required')) {
+              L'email est requis.
+            } @else if (loginForm.get('email')?.hasError('email')) {
+              Veuillez entrer un email valide.
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="password">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          placeholder="••••••"
+          autocomplete="current-password"
+          [attr.aria-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          [attr.aria-describedby]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched ? 'password-error' : null"
+        />
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <span id="password-error" class="error-message">
+            @if (loginForm.get('password')?.hasError('required')) {
+              Le mot de passe est requis.
+            } @else if (loginForm.get('password')?.hasError('minlength')) {
+              Le mot de passe doit contenir au moins 6 caractères.
+            }
+          </span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          <span class="spinner" aria-hidden="true"></span>
+          Connexion en cours...
+        } @else {
+          Se connecter
+        }
+      </button>
+    </form>
+
+    <footer class="login-footer">
+      <p>Pas encore de compte ? <a routerLink="/register">S'inscrire</a></p>
+    </footer>
+  </div>
+</div>

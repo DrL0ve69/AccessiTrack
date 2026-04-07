@@ -1,9 +1,20 @@
-<div class="page-header">
-  <h1>Tableau de bord</h1>
-  <a routerLink="/projects/new" class="btn btn--primary">
-    ➕ Nouveau projet
-  </a>
-</div>
+<header class="dashboard-header">
+  <div class="header-content">
+    <div class="header-title">
+      <h1>Tableau de bord</h1>
+      @if (user()) {
+        <p>Connecté en tant que <strong>{{ user()?.email }}</strong></p>
+      }
+    </div>
+    <div class="header-actions">
+      @if (isAdmin()) {
+        <a routerLink="/admin" class="btn btn--secondary">Administration</a>
+      }
+      <a routerLink="/projects/new" class="btn btn--primary">Nouveau projet</a>
+      <button (click)="logout()" class="btn btn--danger">Déconnexion</button>
+    </div>
+  </div>
+</header>
 
 <div class="page-body">
 
@@ -22,7 +33,7 @@
 
   @if (error()) {
     <div class="alert alert--error" role="alert">
-      ⚠️ {{ error() }}
+      {{ error() }}
     </div>
   }
 
@@ -32,7 +43,7 @@
     <div class="stats-grid" role="region" aria-label="Statistiques">
       <div class="stat-card stat-card--primary">
         <div class="stat-card__label">Projets actifs</div>
-        <div class="stat-card__value" aria-label="{{ activeProjects().length }} projets actifs">
+        <div class="stat-card__value" [attr.aria-label]="activeProjects().length + ' projets actifs'">
           {{ activeProjects().length }}
         </div>
         <div class="stat-card__trend">
@@ -56,7 +67,7 @@
     <!-- Projets récents -->
     <div class="card">
       <div class="card__header">
-        <h2 style="font-size: 1rem; font-weight: 600;">Projets récents</h2>
+        <h2 style="font-size: 1rem; font-weight: 600;">Mes projets récents</h2>
         <a routerLink="/projects" class="btn btn--ghost" style="font-size: 0.875rem;">
           Voir tout
         </a>

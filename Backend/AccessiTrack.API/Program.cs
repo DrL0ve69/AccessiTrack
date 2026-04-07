@@ -1,9 +1,12 @@
 using AccessiTrack.Application;
 using AccessiTrack.Infrastructure;
+using AccessiTrack.Infrastructure.Persistence;
+using AccessiTrack.Infrastructure.Persistence.Seed;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ====== Couches Clean Architecture ======
+// ====== Clean Architecture Layers ======
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -20,23 +23,33 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ====== CORS pour Angular ======
+// ====== CORS for Angular ======
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
         policy.WithOrigins(
-                "http://localhost:4200",           // Développement local
-                "https://accessi-track.vercel.app")      // Production Vercel
+                "http://localhost:4200",
+                "https://accessi-track.vercel.app")
               .AllowAnyMethod()
-              .AllowAnyHeader());
+              .AllowAnyHeader()
+              .AllowCredentials());
 });
 
 var app = builder.Build();
+
+// ====== Auto-migrate and seed on startup ======
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+    await DbSeeder.SeedAsync(db, scope.ServiceProvider);
+}
 
 app.UseCors("AllowAngular");
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

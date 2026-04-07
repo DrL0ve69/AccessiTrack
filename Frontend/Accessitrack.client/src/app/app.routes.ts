@@ -1,4 +1,7 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
+import { publicGuard } from './core/guards/public.guard';
 
 export const routes: Routes = [
   {
@@ -7,17 +10,43 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component')
+        .then(m => m.LoginComponent),
+    canActivate: [publicGuard],
+    title: 'Connexion — AccessiTrack',
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component')
+        .then(m => m.RegisterComponent),
+    canActivate: [publicGuard],
+    title: 'Inscription — AccessiTrack',
+  },
+  {
     path: 'dashboard',
     loadComponent: () =>
       import('./features/dashboard/dashboard.component')
         .then(m => m.DashboardComponent),
+    canActivate: [authGuard],
     title: 'Tableau de bord — AccessiTrack',
+  },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./features/admin/admin-dashboard/admin-dashboard.component')
+        .then(m => m.AdminDashboardComponent),
+    canActivate: [authGuard, adminGuard],
+    title: 'Administration — AccessiTrack',
   },
   {
     path: 'projects',
     loadComponent: () =>
       import('./features/projects/project-list/project-list')
         .then(m => m.ProjectListComponent),
+    canActivate: [authGuard],
     title: 'Projets — AccessiTrack',
   },
   {
@@ -25,6 +54,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/projects/project-form/project-form')
         .then(m => m.ProjectFormComponent),
+    canActivate: [authGuard],
     title: 'Nouveau projet — AccessiTrack',
   },
   {
@@ -32,6 +62,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/audits/audit-list/audit-list')
         .then(m => m.AuditListComponent),
+    canActivate: [authGuard],
     title: 'Audits — AccessiTrack',
   },
   {
@@ -39,6 +70,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/violations/violations-form')
         .then(m => m.ViolationFormComponent),
+    canActivate: [authGuard],
     title: 'Nouvelle violation — AccessiTrack',
   },
   {
