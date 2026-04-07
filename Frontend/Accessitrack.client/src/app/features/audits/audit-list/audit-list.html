@@ -1,0 +1,151 @@
+    <section aria-labelledby="audits-heading">
+ 
+      <div class="page-header">
+        <h1 id="audits-heading">Audits du projet</h1>
+        <div class="actions">
+ 
+          <button type="button"
+                  (click)="startAutomaticAudit()"
+                  [attr.aria-disabled]="isScanning()"
+                  [disabled]="isScanning()"
+                  class="btn-primary"
+                  aria-label="Démarrer un audit automatique d'accessibilité">
+            @if (isScanning()) {
+              <span class="spinner" aria-hidden="true"></span>
+              Analyse en cours…
+            } @else {
+              ✨ Audit automatique
+            }
+          </button>
+ 
+          <button type="button"
+                  (click)="startNewAudit()"
+                  [attr.aria-disabled]="isStarting()"
+                  [disabled]="isStarting()"
+                  aria-label="Démarrer un nouvel audit manuel pour ce projet">
+            @if (isStarting()) { Démarrage… } @else { + Nouvel audit }
+          </button>
+ 
+        </div>
+      </div>
+ 
+      <!-- Screen-reader live region -->
+      <div aria-live="polite" aria-atomic="true" class="sr-only">
+        @if (isLoading()) { Chargement des audits… }
+        @if (!isLoading()) { {{ audits().length }} audit(s) chargé(s). }
+        @if (scanResult()) {
+          Audit terminé : {{ scanResult()?.violationsFound }} violations trouvées,
+          dont {{ scanResult()?.criticalViolations }} critiques,
+          {{ scanResult()?.majorViolations }} majeures,
+          {{ scanResult()?.minorViolations }} mineures.
+        }
+      </div>
+ 
+      <!-- Error banner -->
+      @if (error()) {
+        <div role="alert" aria-live="assertive" class="error-banner">
+          {{ error() }}
+        </div>
+      }
+ 
+      <!-- Automatic audit result card -->
+      @if (scanResult()) {
+        <div class="scan-result" role="status" aria-live="polite">
+          <div class="scan-result-header">
+            <h2>Résultats de l'audit automatique</h2>
+            <button type="button"
+                    class="btn-close"
+                    (click)="scanResult.set(null)"
+                    aria-label="Fermer les résultats">✕</button>
+          </div>
+ 
+          <div class="result-stats">
+            <div class="stat">
+              <span class="stat-value">{{ scanResult()?.violationsFound }}</span>
+              <span class="stat-label">Total</span>
+            </div>
+            <div class="stat critical">
+              <span class="stat-value">{{ scanResult()?.criticalViolations }}</span>
+              <span class="stat-label">Critiques</span>
+            </div>
+            <div class="stat major">
+              <span class="stat-value">{{ scanResult()?.majorViolations }}</span>
+              <span class="stat-label">Majeures</span>
+            </div>
+            <div class="stat minor">
+              <span class="stat-value">{{ scanResult()?.minorViolations }}</span>
+              <span class="stat-label">Mineures</span>
+            </div>
+          </div>
+ 
+          @if (scanResult()?.violationsFound === 0) {
+            <p class="success-message">
+              ✅ Félicitations ! Aucune violation détectée. Ce site semble conforme aux règles WCAG vérifiées.
+            </p>
+          } @else {
+            <p class="info-message">
+              Consultez les violations ci-dessous pour corriger les problèmes d'accessibilité détectés.
+            </p>
+          }
+        </div>
+      }
+ 
+      <!-- Stats -->
+      @if (!isLoading()) {
+        <div role="region" aria-label="Statistiques des audits" class="stats-row">
+          <p>En cours : <strong>{{ inProgressCount() }}</strong></p>
+          <p>Terminés : <strong>{{ completedCount() }}</strong></p>
+          <p>Violations critiques non résolues : <strong>{{ totalCriticalUnresolved() }}</strong></p>
+        </div>
+      }
+ 
+      <!-- Audit list -->
+      @if (isLoading()) {
+        <p aria-busy="true">Chargement…</p>
+      } @else {
+        <ul class="audit-list" aria-label="Liste des audits">
+          @for (audit of audits(); track audit.id) {
+            <li class="audit-card">
+              <header>
+                <span class="audit-status"
+                      [class.status-in-progress]="audit.status === 'InProgress'"
+                      [class.status-completed]="audit.status === 'Completed'">
+                  {{ audit.status === 'InProgress' ? 'En cours' : 'Terminé' }}
+                </span>
+                <time [dateTime]="audit.startedAt">
+                  {{ audit.startedAt | date:'dd/MM/yyyy HH:mm' }}
+                </time>
+              </header>
+ 
+              <p>
+                Violations : <strong>{{ audit.violations?.length ?? 0 }}</strong>
+                @if (criticalCount(audit) > 0) {
+                  — <span class="critical">{{ criticalCount(audit) }} critiques</span>
+                }
+              </p>
+ 
+              <footer>
+                <a [routerLink]="['/projects', projectId(), 'audits', audit.id, 'violations']"
+                   [attr.aria-label]="'Voir les violations de l\'audit du ' + audit.startedAt">
+                  Voir violations
+                </a>
+ 
+                @if (audit.status === 'InProgress') {
+                  <button type="button"
+                          (click)="completeAudit(audit)"
+                          [attr.aria-label]="'Terminer l\'audit du ' + audit.startedAt">
+                    Terminer l'audit
+                  </button>
+                }
+              </footer>
+            </li>
+          } @empty {
+            <li class="empty-state">
+              <p>Aucun audit pour ce projet.</p>
+              <p>Cliquez sur <strong>+ Nouvel audit</strong> ou <strong>✨ Audit automatique</strong> pour commencer.</p>
+            </li>
+          }
+        </ul>
+      }
+ 
+    </section>

@@ -5,14 +5,14 @@ import {
   signal,
 } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-// import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { take } from 'rxjs';
 import { ProjectService } from '../../../core/services/project.service';
 
 @Component({
   selector: 'app-project-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section aria-labelledby="form-heading">
@@ -176,7 +176,7 @@ export class ProjectFormComponent {
     this.serverError.set(null);
 
     this.projectService.create(this.form.getRawValue())
-//      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(take(1))
       .subscribe({
         next: () => {
           this.liveAnnouncer.announce(

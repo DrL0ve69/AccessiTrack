@@ -1,14 +1,18 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { take } from 'rxjs';
 import { ViolationService } from '../../core/services/violation.service';
-import { ViolationSeverity } from '../../core/models/violation.model';
+import { LogViolationCommand } from '../../core/models/violation.model';
 
 @Component({
   selector: 'app-violation-form',
-  standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './violation-form.html',
@@ -27,12 +31,6 @@ export class ViolationFormComponent {
   private readonly auditId = this.route.snapshot.paramMap.get('id') ?? '';
   private readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
 
-  private readonly severityMap: Record<ViolationSeverity, number> = {
-    'Minor': 0,
-    'Major': 1,
-    'Critical': 2
-  };
-
   readonly wcagCriteria = [
     { value: '1.1.1', label: '1.1.1 — Contenu non textuel' },
     { value: '1.3.1', label: '1.3.1 — Information et relations' },
@@ -41,7 +39,9 @@ export class ViolationFormComponent {
     { value: '4.1.2', label: '4.1.2 — Nom, rôle, valeur' },
   ];
 
-  readonly severityOptions: { value: ViolationSeverity; label: string }[] = [
+  readonly severityMap = { Critical: 1, Major: 2, Minor: 3 };
+
+  readonly severityOptions = [
     { value: 'Critical', label: 'Critique' },
     { value: 'Major', label: 'Majeur' },
     { value: 'Minor', label: 'Mineur' },
@@ -52,7 +52,7 @@ export class ViolationFormComponent {
     wcagCriterionName: ['', Validators.required],
     htmlElement: ['', [Validators.required, Validators.maxLength(500)]],
     description: ['', [Validators.required, Validators.maxLength(2000)]],
-    severity: ['' as ViolationSeverity, Validators.required],
+    severity: ['', Validators.required],
   });
 
   isInvalid(control: AbstractControl): boolean {
@@ -79,33 +79,30 @@ export class ViolationFormComponent {
 
     const raw = this.form.getRawValue();
 
-    // ON CHANGE TOUT ICI : PascalCase + Pas de wrapper command
-    // Car l'erreur mentionne "Description" (D majuscule) et non "command.Description"
-    const payload = {
-      AuditId: this.auditId,
-      WcagCriterion: raw.wcagCriterion,
-      WcagCriterionName: raw.wcagCriterionName,
-      HtmlElement: raw.htmlElement,
-      Description: raw.description,
-      Severity: this.severityMap[raw.severity],
-      IsResolved: false
+    const payload: LogViolationCommand = {
+      auditId: this.auditId,
+      wcagCriterion: raw.wcagCriterion,
+      wcagCriterionName: raw.wcagCriterionName,
+      htmlElement: raw.htmlElement,
+      description: raw.description,
+      severity: this.severityMap[raw.severity as keyof typeof this.severityMap],
+      isResolved: false,
     };
 
-    console.log('Tentative avec payload PascalCase :', payload);
-
-    // On utilise "as any" pour passer outre le check de type du DTO Angular
-    this.violationService.create(payload as any)
+    this.violationService
+      .create(payload)
       .pipe(take(1))
       .subscribe({
         next: () => {
-          this.liveAnnouncer.announce('Succès', 'polite');
+          this.liveAnnouncer.announce('Violation créée avec succès.', 'polite');
           this.router.navigate(['/projects', this.projectId, 'audits']);
         },
         error: (err) => {
           this.isSubmitting.set(false);
-          this.serverError.set(err.error?.title || "Erreur de validation");
-          console.error('Rejet API détaillé :', err.error);
-        }
+          this.serverError.set(
+            err.error?.title || 'Erreur lors de la création de la violation.'
+          );
+        },
       });
   }
 }

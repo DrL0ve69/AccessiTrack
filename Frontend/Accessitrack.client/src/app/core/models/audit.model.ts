@@ -20,3 +20,15 @@ export interface Audit {
 export interface CreateAuditDto {
   readonly projectId: string;
 }
+
+/**
+ * Result of an automatic accessibility audit scan.
+ * Contains summary of violations found by severity.
+ */
+export interface AutomaticAuditResult {
+  readonly auditId: string;
+  readonly violationsFound: number;
+  readonly criticalViolations: number;
+  readonly majorViolations: number;
+  readonly minorViolations: number;
+}

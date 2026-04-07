@@ -1,0 +1,121 @@
+<div class="register-container">
+  <div class="register-card">
+    <header class="register-header">
+      <h1>AccessiTrack</h1>
+      <p>Créer votre compte</p>
+    </header>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      @if (errorMessage()) {
+        <div class="error-alert" role="alert">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <div class="form-field">
+        <label for="userName">Nom d'utilisateur</label>
+        <input
+          type="text"
+          id="userName"
+          formControlName="userName"
+          placeholder="johndoe"
+          autocomplete="username"
+          [attr.aria-invalid]="registerForm.get('userName')?.invalid && registerForm.get('userName')?.touched"
+          [attr.aria-describedby]="registerForm.get('userName')?.invalid && registerForm.get('userName')?.touched ? 'username-error' : null"
+        />
+        @if (registerForm.get('userName')?.invalid && registerForm.get('userName')?.touched) {
+          <span id="username-error" class="error-message">
+            @if (registerForm.get('userName')?.hasError('required')) {
+              Le nom d'utilisateur est requis.
+            } @else if (registerForm.get('userName')?.hasError('minlength')) {
+              Le nom d'utilisateur doit contenir au moins 3 caractères.
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="votre@email.com"
+          autocomplete="email"
+          [attr.aria-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+          [attr.aria-describedby]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched ? 'email-error' : null"
+        />
+        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+          <span id="email-error" class="error-message">
+            @if (registerForm.get('email')?.hasError('required')) {
+              L'email est requis.
+            } @else if (registerForm.get('email')?.hasError('email')) {
+              Veuillez entrer un email valide.
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="password">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          placeholder="••••••"
+          autocomplete="new-password"
+          [attr.aria-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+          [attr.aria-describedby]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched ? 'password-error' : null"
+        />
+        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+          <span id="password-error" class="error-message">
+            @if (registerForm.get('password')?.hasError('required')) {
+              Le mot de passe est requis.
+            } @else if (registerForm.get('password')?.hasError('minlength')) {
+              Le mot de passe doit contenir au moins 6 caractères.
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="confirmPassword">Confirmer le mot de passe</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="••••••"
+          autocomplete="new-password"
+          [attr.aria-invalid]="(registerForm.get('confirmPassword')?.invalid || registerForm.hasError('passwordMismatch')) && registerForm.get('confirmPassword')?.touched"
+          [attr.aria-describedby]="(registerForm.get('confirmPassword')?.invalid || registerForm.hasError('passwordMismatch')) && registerForm.get('confirmPassword')?.touched ? 'confirm-error' : null"
+        />
+        @if ((registerForm.get('confirmPassword')?.invalid || registerForm.hasError('passwordMismatch')) && registerForm.get('confirmPassword')?.touched) {
+          <span id="confirm-error" class="error-message">
+            @if (registerForm.get('confirmPassword')?.hasError('required')) {
+              La confirmation du mot de passe est requise.
+            } @else if (registerForm.hasError('passwordMismatch')) {
+              Les mots de passe ne correspondent pas.
+            }
+          </span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          <span class="spinner" aria-hidden="true"></span>
+          Inscription en cours...
+        } @else {
+          S'inscrire
+        }
+      </button>
+    </form>
+
+    <footer class="register-footer">
+      <p>Déjà un compte ? <a routerLink="/login">Se connecter</a></p>
+    </footer>
+  </div>
+</div>

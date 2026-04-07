@@ -72,7 +72,8 @@
               "buildTarget": "Accessitrack.client:build:production"
             },
             "development": {
-              "buildTarget": "Accessitrack.client:build:development"
+              "buildTarget": "Accessitrack.client:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
