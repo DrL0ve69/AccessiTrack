@@ -13,6 +13,10 @@ export class AuditService {
     return this.http.get<Audit[]>(`${this.apiUrl}/project/${projectId}`);
   }
 
+  getById(auditId: string): Observable<Audit> {
+    return this.http.get<Audit>(`${this.apiUrl}/${auditId}`);
+  }
+
   start(dto: CreateAuditDto): Observable<string> {
     return this.http.post<string>(this.apiUrl, dto);
   }

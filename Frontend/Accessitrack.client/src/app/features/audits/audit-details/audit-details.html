@@ -1,0 +1,223 @@
+<section class="audit-details-container" aria-labelledby="audit-title">
+  @if (isLoading()) {
+    <div class="loading" aria-busy="true">
+      <p>Chargement des détails de l'audit…</p>
+    </div>
+  } @else if (error()) {
+    <div role="alert" aria-live="assertive" class="error-banner">
+      <p>{{ error() }}</p>
+      <button type="button" (click)="goBack()" class="btn-secondary">
+        Retour aux audits
+      </button>
+    </div>
+  } @else if (audit()) {
+    <!-- Header -->
+    <div class="audit-header">
+      <div class="header-content">
+        <button type="button" (click)="goBack()" class="btn-back" aria-label="Retour">
+          ← Retour
+        </button>
+        <div class="title-section">
+          <h1 id="audit-title">Détails de l'audit</h1>
+          <time [dateTime]="audit()!.startedAt" class="audit-date">
+            {{ audit()!.startedAt | date:'dd/MM/yyyy HH:mm' }}
+          </time>
+          <span
+            class="audit-status"
+            [class.status-in-progress]="audit()!.status === 'InProgress'"
+            [class.status-completed]="audit()!.status === 'Completed'"
+            role="status">
+            {{ audit()!.status === 'InProgress' ? 'En cours' : 'Terminé' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="summary-stats" role="region" aria-label="Résumé des violations">
+      <div class="stat-card">
+        <span class="stat-label">Total des violations</span>
+        <span class="stat-value">{{ violations().length }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Critiques</span>
+        <span class="stat-value critical">{{ violationsBySeverity().critical.length }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Majeures</span>
+        <span class="stat-value major">{{ violationsBySeverity().major.length }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Mineures</span>
+        <span class="stat-value minor">{{ violationsBySeverity().minor.length }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Résolues</span>
+        <span class="stat-value resolved">{{ resolvedCount() }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Non résolues</span>
+        <span class="stat-value unresolved">{{ unresolvedCount() }}</span>
+      </div>
+    </div>
+
+    <!-- Violations by Severity -->
+    <div class="violations-section" role="region" aria-label="Violations">
+      <!-- Critical Violations -->
+      @if (violationsBySeverity().critical.length > 0) {
+        <div class="violation-group critical-group">
+          <h2 class="group-title critical">
+            🚨 Violations Critiques ({{ violationsBySeverity().critical.length }})
+          </h2>
+          <ul class="violation-list" aria-label="Violations critiques">
+            @for (violation of violationsBySeverity().critical; track violation.id) {
+              <li class="violation-card critical">
+                <div class="violation-header">
+                  <div class="violation-info">
+                    <h3 class="violation-criterion">{{ violation.wcagCriterionName }}</h3>
+                    <p class="violation-criterion-code">{{ violation.wcagCriterion }}</p>
+                  </div>
+                  <div class="violation-meta">
+                    <span class="violation-element" title="Élément HTML">
+                      &lt;{{ violation.htmlElement }}&gt;
+                    </span>
+                    @if (violation.isResolved) {
+                      <span class="badge badge-resolved" aria-label="Résolu">✓ Résolu</span>
+                    } @else {
+                      <span class="badge badge-unresolved" aria-label="Non résolu">Actif</span>
+                    }
+                  </div>
+                </div>
+                <div class="violation-body">
+                  <p class="violation-description">{{ violation.description }}</p>
+                  @if (violation.resolutionNote) {
+                    <div class="resolution-note">
+                      <strong>Note de résolution:</strong>
+                      <p>{{ violation.resolutionNote }}</p>
+                    </div>
+                  }
+                </div>
+                <div class="violation-footer">
+                  <time [dateTime]="violation.reportedAt" class="reported-date">
+                    Signalé le {{ violation.reportedAt | date:'dd/MM/yyyy' }}
+                  </time>
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Major Violations -->
+      @if (violationsBySeverity().major.length > 0) {
+        <div class="violation-group major-group">
+          <h2 class="group-title major">
+            ⚠️ Violations Majeures ({{ violationsBySeverity().major.length }})
+          </h2>
+          <ul class="violation-list" aria-label="Violations majeures">
+            @for (violation of violationsBySeverity().major; track violation.id) {
+              <li class="violation-card major">
+                <div class="violation-header">
+                  <div class="violation-info">
+                    <h3 class="violation-criterion">{{ violation.wcagCriterionName }}</h3>
+                    <p class="violation-criterion-code">{{ violation.wcagCriterion }}</p>
+                  </div>
+                  <div class="violation-meta">
+                    <span class="violation-element" title="Élément HTML">
+                      &lt;{{ violation.htmlElement }}&gt;
+                    </span>
+                    @if (violation.isResolved) {
+                      <span class="badge badge-resolved" aria-label="Résolu">✓ Résolu</span>
+                    } @else {
+                      <span class="badge badge-unresolved" aria-label="Non résolu">Actif</span>
+                    }
+                  </div>
+                </div>
+                <div class="violation-body">
+                  <p class="violation-description">{{ violation.description }}</p>
+                  @if (violation.resolutionNote) {
+                    <div class="resolution-note">
+                      <strong>Note de résolution:</strong>
+                      <p>{{ violation.resolutionNote }}</p>
+                    </div>
+                  }
+                </div>
+                <div class="violation-footer">
+                  <time [dateTime]="violation.reportedAt" class="reported-date">
+                    Signalé le {{ violation.reportedAt | date:'dd/MM/yyyy' }}
+                  </time>
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Minor Violations -->
+      @if (violationsBySeverity().minor.length > 0) {
+        <div class="violation-group minor-group">
+          <h2 class="group-title minor">
+            ℹ️ Violations Mineures ({{ violationsBySeverity().minor.length }})
+          </h2>
+          <ul class="violation-list" aria-label="Violations mineures">
+            @for (violation of violationsBySeverity().minor; track violation.id) {
+              <li class="violation-card minor">
+                <div class="violation-header">
+                  <div class="violation-info">
+                    <h3 class="violation-criterion">{{ violation.wcagCriterionName }}</h3>
+                    <p class="violation-criterion-code">{{ violation.wcagCriterion }}</p>
+                  </div>
+                  <div class="violation-meta">
+                    <span class="violation-element" title="Élément HTML">
+                      &lt;{{ violation.htmlElement }}&gt;
+                    </span>
+                    @if (violation.isResolved) {
+                      <span class="badge badge-resolved" aria-label="Résolu">✓ Résolu</span>
+                    } @else {
+                      <span class="badge badge-unresolved" aria-label="Non résolu">Actif</span>
+                    }
+                  </div>
+                </div>
+                <div class="violation-body">
+                  <p class="violation-description">{{ violation.description }}</p>
+                  @if (violation.resolutionNote) {
+                    <div class="resolution-note">
+                      <strong>Note de résolution:</strong>
+                      <p>{{ violation.resolutionNote }}</p>
+                    </div>
+                  }
+                </div>
+                <div class="violation-footer">
+                  <time [dateTime]="violation.reportedAt" class="reported-date">
+                    Signalé le {{ violation.reportedAt | date:'dd/MM/yyyy' }}
+                  </time>
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (violations().length === 0) {
+        <div class="empty-state">
+          <p>✅ Aucune violation détectée pour cet audit.</p>
+          <p>Ce site semble conforme aux normes d'accessibilité WCAG vérifiées.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="audit-footer">
+      <button type="button" (click)="goBack()" class="btn-secondary">
+        Retour aux audits
+      </button>
+      @if (audit()!.status === 'InProgress') {
+        <a [routerLink]="['/projects', projectId(), 'audits', auditId(), 'violations', 'new']"
+           class="btn-primary"
+           aria-label="Ajouter une violation manuellement">
+          + Ajouter une violation
+        </a>
+      }
+    </div>
+  }
+</section>

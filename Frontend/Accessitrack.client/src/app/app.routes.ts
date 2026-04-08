@@ -66,6 +66,14 @@ export const routes: Routes = [
     title: 'Audits — AccessiTrack',
   },
   {
+    path: 'projects/:projectId/audits/:auditId',
+    loadComponent: () =>
+      import('./features/audits/audit-details/audit-details')
+        .then(m => m.AuditDetailsComponent),
+    canActivate: [authGuard],
+    title: 'Détails de l\'audit — AccessiTrack',
+  },
+  {
     path: 'projects/:projectId/audits/:id/violations/new',
     loadComponent: () =>
       import('./features/violations/violations-form')
