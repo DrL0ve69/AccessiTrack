@@ -2,6 +2,7 @@
 using AccessiTrack.Application.Audits.Commands.StartAudit;
 using AccessiTrack.Application.Audits.Commands.StartAutomaticAudit;
 using AccessiTrack.Application.Audits.Queries.GetAuditsByProject;
+using AccessiTrack.Application.Audits.Queries.GetAuditById;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,17 @@ public class AuditsController : ControllerBase
     {
         var result = await _mediator.Send(
             new GetAuditsByProjectQuery(projectId), ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{auditId:guid}")]
+    [ProducesResponseType(typeof(AuditDetailsDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetById(
+        Guid auditId, CancellationToken ct)
+    {
+        var result = await _mediator.Send(
+            new GetAuditByIdQuery(auditId), ct);
         return Ok(result);
     }
 
