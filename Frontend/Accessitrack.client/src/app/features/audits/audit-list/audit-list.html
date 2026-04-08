@@ -125,11 +125,11 @@
               </p>
  
               <footer>
-                <a [routerLink]="['/projects', projectId(), 'audits', audit.id, 'violations']"
+                <a [routerLink]="['/projects', projectId(), 'audits', audit.id]"
                    [attr.aria-label]="'Voir les violations de l\'audit du ' + audit.startedAt">
                   Voir violations
                 </a>
- 
+
                 @if (audit.status === 'InProgress') {
                   <button type="button"
                           (click)="completeAudit(audit)"
