@@ -2,6 +2,7 @@ using AccessiTrack.Application;
 using AccessiTrack.Infrastructure;
 using AccessiTrack.Infrastructure.Persistence;
 using AccessiTrack.Infrastructure.Persistence.Seed;
+using AccessiTrack.API.Middleware;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +37,10 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// ====== Middleware Pipeline ======
+// Global exception handler (must be first)
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // ====== Auto-migrate and seed on startup ======
 using (var scope = app.Services.CreateScope())

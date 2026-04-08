@@ -1,0 +1,24 @@
+name: Local Config
+version: 1.0.0
+schema: v1
+models:
+  - name: Gemma 4:e4b (Local)
+    provider: ollama
+    model: gemma4:e4b
+  - name: Claude 3.5 Sonnet (Best)
+    provider: openrouter
+    model: anthropic/claude-3.5-sonnet
+    apiKey: VOTRE_NOUVELLE_CLE
+  - name: Gemini 2.0 Flash (Free)
+    provider: openrouter
+    model: google/gemini-2.0-flash-001:free
+    apiKey: VOTRE_NOUVELLE_CLE
+  - name: Autodetect
+    provider: ollama
+    model: AUTODETECT
+    apiBase: ""
+tabAutocompleteModel:
+  - name: Qwen 2.5 Coder 7B
+    provider: ollama
+    model: qwen2.5-coder:7b
+allowAnonymousTelemetry: false
