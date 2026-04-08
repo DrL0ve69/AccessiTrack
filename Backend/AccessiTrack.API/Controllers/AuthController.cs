@@ -1,5 +1,6 @@
 using AccessiTrack.Application.Features.Auth.Commands.Login;
 using AccessiTrack.Application.Features.Auth.Commands.Register;
+using AccessiTrack.Application.Features.Auth.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,9 +18,13 @@ public class AuthController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>
+    /// Authenticate user with email and password.
+    /// Returns JWT token and user information.
+    /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(string), 200)]
+    [ProducesResponseType(typeof(AuthResponseDto), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> Login(
@@ -30,9 +35,13 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Register new user account.
+    /// Returns JWT token and user information on success.
+    /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(string), 200)]
+    [ProducesResponseType(typeof(AuthResponseDto), 200)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> Register(
         [FromBody] RegisterCommand command,
@@ -42,6 +51,10 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Get current authenticated user information from JWT claims.
+    /// Requires valid JWT token in Authorization header.
+    /// </summary>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(object), 200)]
@@ -56,3 +69,4 @@ public class AuthController : ControllerBase
         });
     }
 }
+
