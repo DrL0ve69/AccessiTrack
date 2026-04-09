@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
     /// Get current authenticated user information from JWT claims.
     /// Requires valid JWT token in Authorization header.
     /// </summary>
-    [HttpGet("me")]
+    [HttpGet("profile")]
     [Authorize]
     [ProducesResponseType(typeof(object), 200)]
     [ProducesResponseType(401)]

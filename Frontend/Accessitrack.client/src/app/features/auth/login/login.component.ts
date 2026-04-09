@@ -39,7 +39,10 @@ export class LoginComponent {
       .pipe(take(1))
       .subscribe({
         next: () => {
-          this.router.navigate(['/dashboard']);
+          this.authService.fetchProfile().pipe(take(1)).subscribe(() => {
+            this.router.navigate(['/profile']);
+          }
+          );
         },
         error: (error) => {
           this.errorMessage.set(error.message || 'Email ou mot de passe incorrect.');
