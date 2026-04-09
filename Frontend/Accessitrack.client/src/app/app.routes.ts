@@ -58,6 +58,15 @@ export const routes: Routes = [
     canActivate: [authGuard],
     title: 'Tableau de bord — AccessiTrack',
   },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./features/profile/user-profile').then(
+        (m) => m.UserProfileComponent
+      ),
+    canActivate: [authGuard],
+    title: 'Profil utilisateur — AccessiTrack',
+  },
 
   // ====== Admin Routes (authGuard + adminGuard) ======
   {

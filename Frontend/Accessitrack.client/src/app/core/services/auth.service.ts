@@ -113,7 +113,7 @@ export class AuthService {
   }
 
   fetchProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.apiUrl}/me`).pipe(
+    return this.http.get<UserProfile>(`${this.apiUrl}/profile`).pipe(
       tap((profile) => this._profile.set(profile)),
       catchError((err) => {
         console.error('Erreur lors de la récupération du profil', err);
