@@ -13,6 +13,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Audit> Audits => Set<Audit>();
     public DbSet<Violation> Violations => Set<Violation>();
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -45,6 +45,38 @@ body {
   background: var(--color-gray-50);
   line-height: 1.6;
   min-height: 100vh;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  //transition: all 0.3s ease;
+}
+
+/* HIGH CONTRAST MODE (Global Override) */
+.high-contrast {
+  --color-primary: #ffff00;
+  --color-gray-50: #000000;
+  --color-white: #000000;
+  --color-gray-900: #ffff00;
+  --color-gray-700: #ffffff;
+  
+  body, main, nav {
+    background-color: #000000 !important;
+    color: #ffff00 !important;
+  }
+
+  button, .btn {
+    border: 2px solid #ffff00 !important;
+    background: #000 !important;
+    color: #ffff00 !important;
+  }
+}
+
+app-root.high-contrast {
+  display: block; // Important pour que le background prenne tout l'espace
+  background-color: #000 !important;
+  color: #ff0 !important;
+  min-height: 100vh;
 }
 
 /* =============================================
@@ -90,8 +122,12 @@ body {
   display: flex;
   min-height: 100vh;
 }
+app-root {
+  display: block;
+  height: 100%;
+}
 
-.sidebar {
+/* .sidebar {
   width: 260px;
   background: var(--color-white);
   border-right: 1px solid var(--color-gray-200);
@@ -166,7 +202,7 @@ body {
   border-top: 1px solid var(--color-gray-200);
   font-size: 0.75rem;
   color: var(--color-gray-500);
-}
+} */
 
 .main-content {
   margin-left: 260px;

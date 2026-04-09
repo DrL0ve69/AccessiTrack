@@ -9,10 +9,11 @@ import { AuthService } from '../services/auth.service';
  * - Adds Authorization header with Bearer token for authenticated requests
  * - Catches 401 errors and redirects to login when token is invalid/expired
  */
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const token = authService.getToken();
+  const token = authService.token();
 
   // Clone request and set Authorization header if token exists
   if (token) {
@@ -40,6 +41,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       return throwError(() => error);
-    })
+    }),
   );
 };

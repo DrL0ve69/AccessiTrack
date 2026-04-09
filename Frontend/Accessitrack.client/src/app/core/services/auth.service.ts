@@ -3,12 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../models/auth.model';
+import {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  User,
+  UserProfile,
+} from '../models/auth.model';
 
 /**
  * Authentication Service for AccessiTrack.
  * Manages user authentication state, token storage, and session lifecycle.
- * 
+ *
  * Clean Architecture: This is part of the Core/Application layer.
  * It handles cross-cutting auth concerns and acts as a facade
  * for auth API operations.
@@ -22,10 +28,12 @@ export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/api/auth`;
   private readonly tokenKey = 'accessitrack_token';
   private readonly userKey = 'accessitrack_user';
+  private readonly _profile = signal<UserProfile | null>(null);
 
   // Signals for reactive state management (Angular 16+)
   private readonly _user = signal<User | null>(this.loadUser());
   private readonly _token = signal<string | null>(this.loadToken());
+  readonly profile = this._profile.asReadonly();
 
   // Computed properties for derived state
   readonly user = computed(() => this._user());
@@ -44,10 +52,8 @@ export class AuthService {
       tap((response) => this.setSession(response)),
       catchError((error) => {
         console.error('Login failed:', error);
-        return throwError(
-          () => new Error(error.message || 'Email ou mot de passe incorrect.')
-        );
-      })
+        return throwError(() => new Error(error.message || 'Email ou mot de passe incorrect.'));
+      }),
     );
   }
 
@@ -61,10 +67,8 @@ export class AuthService {
       tap((response) => this.setSession(response)),
       catchError((error) => {
         console.error('Registration failed:', error);
-        return throwError(
-          () => new Error(error.message || 'Erreur lors de l\'inscription.')
-        );
-      })
+        return throwError(() => new Error(error.message || "Erreur lors de l'inscription."));
+      }),
     );
   }
 
@@ -105,6 +109,17 @@ export class AuthService {
     // Update signals (triggers reactivity)
     this._token.set(response.token);
     this._user.set(user);
+    this.fetchProfile().subscribe();
+  }
+
+  fetchProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiUrl}/me`).pipe(
+      tap((profile) => this._profile.set(profile)),
+      catchError((err) => {
+        console.error('Erreur lors de la récupération du profil', err);
+        return throwError(() => err);
+      }),
+    );
   }
 
   /**

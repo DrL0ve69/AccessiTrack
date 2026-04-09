@@ -3,12 +3,17 @@ import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } fro
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
+import { ThemeService } from './core/services/theme.service';
+import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, SidebarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+  host:{'[class.high-contrast]':'themeService.isHighContrast()'},
+  templateUrl: './app.html',
+  styleUrl: './app.scss',
+/*   template: `
     <a class="skip-link" href="#main-content">Aller au contenu principal</a>
 
     <div class="app-layout">
@@ -65,11 +70,12 @@ import { filter } from 'rxjs/operators';
       </main>
 
     </div>
-  `,
+  `, */
 })
 export class AppComponent {
   private readonly router = inject(Router);
   private readonly liveAnnouncer = inject(LiveAnnouncer);
+  protected readonly themeService = inject(ThemeService);
 
   constructor() {
     this.router.events
@@ -78,11 +84,16 @@ export class AppComponent {
         takeUntilDestroyed(),
       )
       .subscribe(() => {
-        this.liveAnnouncer.announce(
-          `Page chargée : ${document.title}`,
-          'polite',
-        );
-        document.getElementById('main-content')?.focus();
+        this.handleNavigationA11y();
       });
+  }
+
+  private handleNavigationA11y(): void {
+    // Annonce le changement de page aux lecteurs d'écran
+    this.liveAnnouncer.announce(`Page chargée : ${document.title}`, 'polite');
+    
+    // Déplace le focus au contenu principal pour éviter de devoir retaper la nav
+    const mainContent = document.getElementById('main-content');
+    mainContent?.focus();
   }
 }

@@ -1,29 +1,30 @@
-using System.Linq;
 using AccessiTrack.Application.Common.Exceptions;
 using AccessiTrack.Application.Common.Interfaces;
 using AccessiTrack.Application.Features.Auth.DTOs;
+using AccessiTrack.Domain.Entities;
 using AccessiTrack.Infrastructure.Identity;
+using AccessiTrack.Infrastructure.Persistence.Repositories;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Identity;
+using System.Linq;
 
 namespace AccessiTrack.Infrastructure.Services;
 
 public class IdentityService(
     UserManager<ApplicationUser> userManager,
-    ITokenService tokenService) : IIdentityService
+    ITokenService tokenService,
+    IUserProfileRepository userProfileRepository) : IIdentityService
 {
     public async Task<AuthResponseDto> LoginAsync(string email, string password, CancellationToken ct)
     {
         var user = await userManager.FindByEmailAsync(email)
-            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+            ?? throw new UnauthorizedAccessException("Identifiants invalides.");
 
-        var isValid = await userManager.CheckPasswordAsync(user, password);
-        if (!isValid)
-            throw new UnauthorizedAccessException("Invalid credentials.");
+        if (!await userManager.CheckPasswordAsync(user, password))
+            throw new UnauthorizedAccessException("Identifiants invalides.");
 
         var roles = await userManager.GetRolesAsync(user);
-        var token = await tokenService.GenerateTokenAsync(
-            user.Id.ToString(), user.Email!, roles);
+        var token = await tokenService.GenerateTokenAsync(user.Id.ToString(), user.Email!, roles);
 
         return new AuthResponseDto(
             token,
@@ -36,46 +37,38 @@ public class IdentityService(
 
     public async Task<AuthResponseDto> RegisterAsync(string userName, string email, string password, CancellationToken ct)
     {
+        // 1. Création du compte de sécurité
         var user = new ApplicationUser
         {
-            UserName = userName,
+            UserName = email, // Souvent préférable d'utiliser l'email comme username
             Email = email,
             DisplayName = userName
         };
 
         var result = await userManager.CreateAsync(user, password);
+
         if (!result.Succeeded)
-        {
-            var failures = result.Errors.Select(e =>
-            {
-                string propertyName = e.Code switch
-                {
-                    var c when c.Contains("Password") => "Password",
-                    var c when c.Contains("Email") => "Email",
-                    var c when c.Contains("UserName") || c.Contains("User") => "UserName",
-                    _ => "General"
-                };
+            throw new ValidationException(result.Errors.Select(e => new ValidationFailure("General", e.Description)));
 
-                return new ValidationFailure(propertyName, e.Description);
-            });
-
-            throw new ValidationException(failures);
-        }
-
-        // Assign Member role by default
         await userManager.AddToRoleAsync(user, "Member");
 
-        var roles = await userManager.GetRolesAsync(user);
-        var token = await tokenService.GenerateTokenAsync(
-            user.Id.ToString(), user.Email!, roles);
+        // 2. CRÉATION DU PROFIL MÉTIER (Lien Identité -> Domaine)
+        var profile = new UserProfile
+        {
+            Id = Guid.NewGuid(),
+            IdentityId = user.Id.ToString(),
+            FullName = userName,
+            Email = email,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        return new AuthResponseDto(
-            token,
-            user.Id.ToString(),
-            user.Email!,
-            roles.FirstOrDefault() ?? "Member",
-            DateTime.UtcNow.AddHours(8)
-        );
+        await userProfileRepository.AddAsync(profile, ct);
+
+        // 3. Réponse
+        var roles = await userManager.GetRolesAsync(user);
+        var token = await tokenService.GenerateTokenAsync(user.Id.ToString(), user.Email!, roles);
+
+        return new AuthResponseDto(token, user.Id.ToString(), user.Email!, "Member", DateTime.UtcNow.AddHours(8));
     }
 
     public async Task DeleteUserAsync(string userId, CancellationToken ct = default)
