@@ -52,9 +52,10 @@ yarn-error.log*
 # SECRETS & CONFIGURATION (CRITIQUE ⚠️)
 # Ne JAMAIS commiter ces fichiers
 # ========================================
+**/appsettings.json
 **/appsettings.Development.json
-**/appsettings.Production.json
 **/appsettings.Staging.json
+**/appsettings.Production.json
 **/*.env
 .env
 .env.local

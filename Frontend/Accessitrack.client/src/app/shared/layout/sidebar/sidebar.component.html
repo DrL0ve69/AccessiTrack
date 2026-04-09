@@ -1,0 +1,40 @@
+<nav class="sidebar" role="navigation" aria-label="Navigation principale">
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-icon" aria-hidden="true">♿</span>
+      <h1>AccessiTrack</h1>
+    </div>
+    <p class="tagline">Audits WCAG 2.1/2.2</p>
+  </div>
+
+  <ul class="nav-list">
+    <li>
+      <a routerLink="/dashboard" 
+         routerLinkActive="active" 
+         [routerLinkActiveOptions]="{ exact: true }">
+        <span class="icon" aria-hidden="true">📊</span>
+        Tableau de bord
+      </a>
+    </li>
+    <li>
+      <a routerLink="/projects" routerLinkActive="active">
+        <span class="icon" aria-hidden="true">📁</span>
+        Projets
+      </a>
+    </li>
+    <li>
+      <a routerLink="/profile" routerLinkActive="active">
+        <span class="icon" aria-hidden="true">👤</span>
+        Mon Profil
+      </a>
+    </li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <p>Stagiaire CRTC — {{ currentYear }}</p>
+    <p>Philippe Charron</p>
+    <button (click)="authService.logout()" class="btn-logout">
+      Déconnexion
+    </button>
+  </div>
+</nav>

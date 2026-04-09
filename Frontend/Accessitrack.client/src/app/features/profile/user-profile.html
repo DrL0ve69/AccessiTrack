@@ -1,0 +1,44 @@
+<section class="profile-container" aria-labelledby="profile-title">
+  <header class="profile-header">
+    <div class="avatar" aria-hidden="true">{{ userInitial() }}</div>
+    <div class="user-info">
+      <h2 id="profile-title">Profil Utilisateur</h2>
+      <p class="email">{{ userProfile()?.email }}</p>
+    </div>
+  </header>
+
+  <div class="profile-card">
+    <h3>Informations personnelles</h3>
+    <dl class="info-list">
+      <dt>Nom complet</dt>
+      <dd>{{ userProfile()?.fullName }}</dd>
+      
+      <dt>Rôle</dt>
+      <dd class="badge">{{ currentUser()?.role }}</dd>
+    </dl>
+  </div>
+
+  <div class="profile-card">
+    <h3>Accessibilité et Préférences</h3>
+    <form [formGroup]="profileForm" (ngSubmit)="savePreferences()">
+      <div class="form-group">
+        <label class="checkbox-container">
+          <input type="checkbox" formControlName="highContrast">
+          <span class="label-text">Activer le contraste élevé</span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="lang">Langue préférée</label>
+        <select id="lang" formControlName="language">
+          <option value="fr-CA">Français (Canada)</option>
+          <option value="en-US">English (US)</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-primary">
+        Enregistrer les modifications
+      </button>
+    </form>
+  </div>
+</section>

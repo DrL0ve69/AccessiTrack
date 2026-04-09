@@ -69,6 +69,7 @@ public static class DependencyInjection
         // Services
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IUserProfileRepository, UserProfileRepository>();
         //services.AddScoped<IAccessibilityScanner, AccessibilityScanner>();
         services.AddHttpClient<IAccessibilityScanner, AccessibilityScanner>();
 

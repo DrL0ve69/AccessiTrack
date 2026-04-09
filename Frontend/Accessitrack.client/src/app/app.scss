@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+.app-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; // Empêche le scroll global "cassé"
+}
+
+.content-area {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto; // C'est ici que le contenu défilera
+  background-color: var(--color-gray-50);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Version mobile */
+@media (max-width: 768px) {
+  .content-area {
+    margin-left: 0;
+  }
+}

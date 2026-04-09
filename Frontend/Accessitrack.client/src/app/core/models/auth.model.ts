@@ -22,3 +22,13 @@ export interface User {
   email: string;
   role: 'Admin' | 'Member';
 }
+
+export interface UserProfile {
+  id: string;
+  identityId: string;
+  fullName: string;
+  email: string;
+  preferredLanguage: string;
+  highContrastEnabled: boolean;
+  createdAt: string;
+}
