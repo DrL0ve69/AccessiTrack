@@ -5,6 +5,11 @@ models:
   - name: Gemma 4:e4b (Local)
     provider: ollama
     model: gemma4:e4b
+    roles:
+      - edit
+      - autocomplete
+      - apply
+      - chat
   - name: Claude 3.5 Sonnet (Best)
     provider: openrouter
     model: anthropic/claude-3.5-sonnet
@@ -18,7 +23,12 @@ models:
     model: AUTODETECT
     apiBase: ""
 tabAutocompleteModel:
-  - name: Qwen 2.5 Coder 7B
+  - name: Gemma 4:e4b (Local)
     provider: ollama
-    model: qwen2.5-coder:7b
+    model: gemma4:e4b
 allowAnonymousTelemetry: false
+contextProviders:
+  - name: file
+  - name: folder
+  - name: codebase
+  - name: docs
