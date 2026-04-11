@@ -53,10 +53,10 @@ When you update a component, be sure to put the logic in the ts file, the styles
 ## Resources
 
 Here are some links to the essentials for building Angular applications. Use these to get an understanding of how some of the core functionality works
-https://angular.dev/essentials/components
-https://angular.dev/essentials/signals
-https://angular.dev/essentials/templates
-https://angular.dev/essentials/dependency-injection
+- [Angular Essentials: Components](https://angular.dev/essentials/components)
+- [Angular Essentials: Signals](https://angular.dev/essentials/signals)
+- [Angular Essentials: Templates](https://angular.dev/essentials/templates)
+- [Angular Essentials: Dependency Injection](https://angular.dev/essentials/dependency-injection)
 
 ## Best practices & Style guide
 

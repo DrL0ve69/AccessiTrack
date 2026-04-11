@@ -13,7 +13,7 @@ models:
   - name: Claude 3.5 Sonnet (Best)
     provider: openrouter
     model: anthropic/claude-3.5-sonnet
-    apiKey: VOTRE_NOUVELLE_CLE
+    apiKey: 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
   - name: Gemini 2.0 Flash (Free)
     provider: openrouter
     model: google/gemini-2.0-flash-001:free

@@ -36,7 +36,7 @@ UI Components (Login, Register)
 ### **Login Flow**
 
 ```
-1. User enters email/password in LoginComponent
+1. User enters email or username/password in LoginComponent
    ↓
 2. LoginComponent calls authService.login(credentials)
    ↓
@@ -49,7 +49,7 @@ UI Components (Login, Register)
 6. LoginHandler calls identityService.LoginAsync()
    ↓
 7. IdentityService:
-   - Finds user by email in database
+   - Finds user by email or username in database
    - Validates password hash
    - Creates JWT token with user claims
    - Returns AuthResponseDto { token, userId, email, role, expiresAt }
@@ -69,11 +69,12 @@ UI Components (Login, Register)
     - User info displays in UI
     ↓
 12. LoginComponent.subscribe receives success
-    - Navigates to /dashboard
+    - Navigates to /profile
     ↓
-13. Dashboard route has authGuard
+13. Profil route has authGuard and profileGuard
     - authGuard checks isAuthenticated() → TRUE
-    - Route loads DashboardComponent
+    - profileGuard checks identity of logged user (for modifications of the personal profile), if Role Admin (Full Crud control)
+    - Route loads user-profileComponent
 ```
 
 ### **Protected Request Flow**
@@ -163,7 +164,7 @@ UI Components (Login, Register)
 **Role**: Centralized error handling
 - Maps backend error responses to standardized frontend format
 - Handles network errors vs API errors
-- Provides user-friendly French messages
+- Provides user-friendly French messages or English (will add ressources eventually)
 - Returns typed `HttpApiError` object
 
 #### Route Guards (core/guards/*.guard.ts)
@@ -178,7 +179,7 @@ UI Components (Login, Register)
 **Fixed**: ProducesResponseType now correctly shows `AuthResponseDto` instead of `string`
 - POST /api/auth/login
 - POST /api/auth/register
-- GET /api/auth/me (verified endpoint)
+- GET /api/auth/profile (verified endpoint)
 
 #### `IdentityService` (Infrastructure/Services/IdentityService.cs)
 **Role**: User authentication business logic
