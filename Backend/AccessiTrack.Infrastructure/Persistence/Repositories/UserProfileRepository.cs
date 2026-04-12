@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using AccessiTrack.Application.Common.Interfaces;
@@ -18,6 +18,9 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
     public async Task<UserProfile?> GetByIdentityIdAsync(string identityId, CancellationToken ct)
         => await context.UserProfiles
             .FirstOrDefaultAsync(x => x.IdentityId == identityId, ct);
+
+    public async Task<IReadOnlyList<UserProfile>> GetAllAsync(CancellationToken ct)
+        => await context.UserProfiles.ToListAsync(ct);
 
     public async Task UpdateAsync(UserProfile profile, CancellationToken ct)
     {

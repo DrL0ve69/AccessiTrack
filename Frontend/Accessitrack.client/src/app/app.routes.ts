@@ -61,7 +61,7 @@ export const routes: Routes = [
   {
     path: 'profile',
     loadComponent: () =>
-      import('./features/profile/user-profile').then(
+      import('./features/profile/user-profile.component').then(
         (m) => m.UserProfileComponent
       ),
     canActivate: [authGuard],
@@ -128,6 +128,30 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
     title: 'Nouvelle violation — AccessiTrack',
+  },
+
+  // ====== Members Routes ======
+  {
+    path: 'members',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/members/members-list.component').then(
+            (m) => m.MembersListComponent
+          ),
+        title: 'Équipe — AccessiTrack',
+      },
+      {
+        path: ':userId',
+        loadComponent: () =>
+          import('./features/members/member-detail.component').then(
+            (m) => m.MemberDetailComponent
+          ),
+        title: 'Profil du membre — AccessiTrack',
+      },
+    ],
   },
 
   // ====== Wildcard - Catch-all ======

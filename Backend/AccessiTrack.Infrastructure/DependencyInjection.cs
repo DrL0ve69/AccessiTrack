@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+        services.AddScoped<IFileStorageService, FileStorageService>();
         //services.AddScoped<IAccessibilityScanner, AccessibilityScanner>();
         services.AddHttpClient<IAccessibilityScanner, AccessibilityScanner>();
 

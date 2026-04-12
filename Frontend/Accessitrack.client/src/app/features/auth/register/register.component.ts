@@ -14,7 +14,7 @@ function passwordMatchValidator(form: FormGroup): null | { passwordMismatch: tru
   selector: 'app-register',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.scss'],
+  styleUrl: './register.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterComponent {
@@ -50,7 +50,7 @@ export class RegisterComponent {
       .pipe(take(1))
       .subscribe({
         next: () => {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/profile']);
         },
         error: (error) => {
           this.errorMessage.set(error.message || 'Erreur lors de l\'inscription.');
