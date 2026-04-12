@@ -33,7 +33,7 @@ public class StartAuditCommandHandler
             throw new Exception($"Projet {request.ProjectId} introuvable.");
 
         // Crée l'audit via la Factory Method du Domain
-        var audit = Audit.Start(request.ProjectId);
+        var audit = Audit.Create(request.ProjectId);
 
         await _auditRepository.AddAsync(audit, cancellationToken);
         await _auditRepository.SaveChangesAsync(cancellationToken);

@@ -21,11 +21,10 @@ import { publicGuard } from './core/guards/public.guard';
  * 7. Backend validates JWT token
  */
 export const routes: Routes = [
-  // ====== Root Redirect ======
   {
     path: '',
-    redirectTo: 'dashboard',
-    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/home/home').then(m => m.HomeComponent),
   },
 
   // ====== Public Routes (publicGuard ensures unauthenticated users only) ======

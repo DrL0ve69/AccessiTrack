@@ -36,4 +36,9 @@ public class ProjectRepository : IProjectRepository
 
     public async Task<int> SaveChangesAsync(CancellationToken ct)
         => await _context.SaveChangesAsync(ct);
+
+    public Task<IReadOnlyList<Project>> GetAllAsync(string? ownerId, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
 }

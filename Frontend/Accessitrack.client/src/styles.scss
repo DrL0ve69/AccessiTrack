@@ -48,7 +48,7 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  //overflow: hidden;
   //transition: all 0.3s ease;
 }
 
@@ -124,7 +124,7 @@ app-root.high-contrast {
 }
 app-root {
   display: block;
-  height: 100%;
+  min-height: 100%;
 }
 
 /* .sidebar {

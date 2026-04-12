@@ -20,7 +20,7 @@ public class AuditConfiguration : IEntityTypeConfiguration<Audit>
         builder.Property(a => a.StartedAt)
             .IsRequired();
 
-        builder.Property(a => a.Notes)
+        builder.Property(a => a.ErrorMessage)
             .HasMaxLength(1000);
 
         builder.HasMany(a => a.Violations)

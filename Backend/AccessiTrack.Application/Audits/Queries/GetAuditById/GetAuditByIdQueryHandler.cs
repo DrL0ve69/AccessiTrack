@@ -28,9 +28,9 @@ public class GetAuditByIdQueryHandler
             audit.Id,
             audit.ProjectId,
             audit.Status.ToString(),
-            audit.StartedAt,
+            DateTime.Now,
             audit.CompletedAt,
-            audit.Notes,
+            audit.Score.ToString(),
             audit.Violations.Count,
             audit.Violations.Count(v =>
                 v.Severity == Domain.Enums.ViolationSeverity.Critical

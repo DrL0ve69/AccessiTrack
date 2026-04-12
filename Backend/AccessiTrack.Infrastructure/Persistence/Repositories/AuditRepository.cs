@@ -37,4 +37,9 @@ public class AuditRepository : IAuditRepository
 
     public async Task<int> SaveChangesAsync(CancellationToken ct = default)
         => await _context.SaveChangesAsync(ct);
+
+    public Task<Audit?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
 }

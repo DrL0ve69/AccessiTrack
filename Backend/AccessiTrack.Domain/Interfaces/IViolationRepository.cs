@@ -11,5 +11,6 @@ public interface IViolationRepository
     Task<IEnumerable<Violation>> GetByAuditIdAsync(Guid auditId, CancellationToken ct = default);
     Task AddAsync(Violation violation, CancellationToken ct = default);
     Task UpdateAsync(Violation violation, CancellationToken ct = default);
+    Task AddRangeAsync(IEnumerable<Violation> violations, CancellationToken ct = default);
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

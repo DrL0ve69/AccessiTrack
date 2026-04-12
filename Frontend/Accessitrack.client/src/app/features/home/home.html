@@ -1,0 +1,262 @@
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<!-- NAV -->
+<header class="nav" role="banner">
+  <div class="nav__inner">
+    <a routerLink="/" class="nav__logo" aria-label="AccessiTrack home">
+      <span class="nav__logo-mark" aria-hidden="true">♿</span>
+      AccessiTrack
+    </a>
+
+    <nav class="nav__links" aria-label="Primary navigation">
+      <a href="#services" class="nav__link">Services</a>
+      <a href="#about" class="nav__link">About</a>
+      <a href="#testimonials" class="nav__link">Clients</a>
+    </nav>
+
+    <div class="nav__cta">
+      @if (auth.isAuthenticated()) {
+        <a [routerLink]="ctaRoute()" class="btn btn--primary">Dashboard →</a>
+      } @else {
+        <a routerLink="/login" class="btn btn--ghost">Sign in</a>
+        <a routerLink="/register" class="btn btn--primary">Get started</a>
+      }
+    </div>
+
+    <button
+      class="nav__burger"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="mobile-menu"
+      aria-label="Toggle navigation menu"
+    >
+      <span class="nav__burger-bar" aria-hidden="true"></span>
+      <span class="nav__burger-bar" aria-hidden="true"></span>
+      <span class="nav__burger-bar" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  @if (menuOpen()) {
+    <nav id="mobile-menu" class="nav__mobile" aria-label="Mobile navigation">
+      <a href="#services" class="nav__mobile-link" (click)="toggleMenu()">Services</a>
+      <a href="#about" class="nav__mobile-link" (click)="toggleMenu()">About</a>
+      <a href="#testimonials" class="nav__mobile-link" (click)="toggleMenu()">Clients</a>
+      <a routerLink="/login" class="nav__mobile-link" (click)="toggleMenu()">Sign in</a>
+      <a routerLink="/register" class="btn btn--primary nav__mobile-cta" (click)="toggleMenu()">Get started</a>
+    </nav>
+  }
+</header>
+
+<!-- HERO -->
+<main id="main-content" tabindex="-1">
+  <section class="hero" aria-label="Hero" #heroRef>
+    <div class="hero__noise" aria-hidden="true"></div>
+    <div class="hero__grid" aria-hidden="true"></div>
+
+    <div class="hero__content">
+      <div class="hero__eyebrow">
+        <span class="hero__badge">WCAG 2.2 • Section 508 • AODA</span>
+      </div>
+
+      <h1 class="hero__title">
+        <span class="hero__title-line hero__title-line--1">Make the web</span>
+        <span class="hero__title-line hero__title-line--2">
+          <em class="hero__title-accent">accessible</em>
+        </span>
+        <span class="hero__title-line hero__title-line--3">for everyone.</span>
+      </h1>
+
+      <p class="hero__subtitle">
+        AccessiTrack automates WCAG auditing, tracks violations over time,
+        and guides your team to remediation — all in one clean dashboard.
+      </p>
+
+      <div class="hero__actions">
+        <a [routerLink]="ctaRoute()" class="btn btn--hero">
+          Start auditing free
+          <span class="btn__arrow" aria-hidden="true">→</span>
+        </a>
+        <a href="#services" class="btn btn--outline">See how it works</a>
+      </div>
+
+      <div class="hero__social-proof" aria-label="Usage stats">
+        <div class="stat">
+          <span class="stat__num">1,200+</span>
+          <span class="stat__label">Audits run</span>
+        </div>
+        <div class="stat__divider" aria-hidden="true"></div>
+        <div class="stat">
+          <span class="stat__num">98%</span>
+          <span class="stat__label">Compliance rate achieved</span>
+        </div>
+        <div class="stat__divider" aria-hidden="true"></div>
+        <div class="stat">
+          <span class="stat__num">60+</span>
+          <span class="stat__label">Teams trust us</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero__visual" aria-hidden="true">
+      <div class="mockup">
+        <div class="mockup__bar">
+          <span class="mockup__dot"></span>
+          <span class="mockup__dot"></span>
+          <span class="mockup__dot"></span>
+        </div>
+        <div class="mockup__body">
+          <div class="mockup__score">
+            <div class="mockup__score-ring">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle cx="60" cy="60" r="52" class="ring-bg"/>
+                <circle cx="60" cy="60" r="52" class="ring-fill"/>
+              </svg>
+              <span class="mockup__score-val">87</span>
+            </div>
+            <span class="mockup__score-label">Accessibility score</span>
+          </div>
+          <div class="mockup__rows">
+            <div class="mockup__row mockup__row--error">
+              <span class="mockup__pill mockup__pill--error">Critical</span>
+              <span>Missing alt text on 4 images</span>
+            </div>
+            <div class="mockup__row mockup__row--warn">
+              <span class="mockup__pill mockup__pill--warn">Moderate</span>
+              <span>Color contrast ratio 2.8:1</span>
+            </div>
+            <div class="mockup__row mockup__row--ok">
+              <span class="mockup__pill mockup__pill--ok">Pass</span>
+              <span>Keyboard navigation</span>
+            </div>
+            <div class="mockup__row mockup__row--ok">
+              <span class="mockup__pill mockup__pill--ok">Pass</span>
+              <span>ARIA landmarks present</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <section class="ticker-section" aria-labelledby="ticker-heading" id="testimonials">
+    <h2 id="ticker-heading" class="sr-only">Client testimonials</h2>
+    <div class="ticker" aria-live="off">
+      <ul class="ticker__track" role="list">
+        @for (item of tickerItems(); track $index) {
+          <li class="ticker__item" aria-hidden="{{ $index >= testimonials.length }}">
+            <blockquote class="ticker__quote">
+              <p>"{{ item.quote }}"</p>
+              <footer>
+                <cite>{{ item.author }}<span class="ticker__role"> — {{ item.role }}</span></cite>
+              </footer>
+            </blockquote>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="services" id="services" aria-labelledby="services-heading">
+    <div class="services__inner">
+      <header class="section-header">
+        <p class="section-eyebrow">What we do</p>
+        <h2 id="services-heading" class="section-title">
+          Everything you need to ship accessible products
+        </h2>
+      </header>
+
+      <ul class="services__grid" role="list">
+        @for (service of services; track service.title) {
+          <li class="service-card">
+            <span class="service-card__icon" aria-hidden="true">{{ service.icon }}</span>
+            <h3 class="service-card__title">{{ service.title }}</h3>
+            <p class="service-card__desc">{{ service.description }}</p>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="about" aria-labelledby="about-heading">
+    <div class="about__inner">
+      <div class="about__text">
+        <p class="section-eyebrow">About the developer</p>
+        <h2 id="about-heading" class="section-title">
+          Built by a dev who cares about inclusion
+        </h2>
+        <p class="about__body">
+          I'm a full-stack developer specializing in <strong>accessible, performant web applications</strong>.
+          After spending years watching accessibility get deprioritized — or bolted on as an afterthought —
+          I built AccessiTrack to make compliance a natural part of every team's workflow.
+        </p>
+        <p class="about__body">
+          My stack: <strong>.NET 10 / C#</strong>, <strong>Angular</strong>, Clean Architecture,
+          CQRS, and a deep respect for semantic HTML. I work with startups, agencies, and government
+          clients who need their digital products to work for <em>everyone</em>.
+        </p>
+        <ul class="about__skills" aria-label="Core skills">
+          <li>Angular 21 · TypeScript</li>
+          <li>.NET 10 · C# 14</li>
+          <li>Clean Architecture · CQRS</li>
+          <li>WCAG 2.2 · axe-core</li>
+          <li>SQL Server · EF Core</li>
+          <li>Azure · CI/CD</li>
+        </ul>
+        <a routerLink="/register" class="btn btn--primary">Work with me →</a>
+      </div>
+
+      <div class="about__card-wrap" aria-hidden="true">
+        <div class="about__card">
+          <div class="about__avatar">
+            <span class="about__avatar-initials">Dev</span>
+          </div>
+          <p class="about__card-name">Full-Stack Developer</p>
+          <p class="about__card-tag">Accessibility Engineer</p>
+          <div class="about__card-badges">
+            <span class="badge">Angular</span>
+            <span class="badge">.NET</span>
+            <span class="badge">WCAG</span>
+            <span class="badge">Clean Arch</span>
+          </div>
+          <div class="about__card-stat">
+            <span class="about__card-stat-val">5+</span>
+            <span class="about__card-stat-label">Years shipping accessible apps</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BAND -->
+  <section class="cta-band" aria-labelledby="cta-heading">
+    <div class="cta-band__inner">
+      <h2 id="cta-heading" class="cta-band__title">
+        Ready to audit your first project?
+      </h2>
+      <p class="cta-band__sub">Free to start. No credit card required.</p>
+      <div class="cta-band__actions">
+        <a routerLink="/register" class="btn btn--white">Create free account →</a>
+        <a routerLink="/login" class="btn btn--outline-white">Sign in</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer" role="contentinfo">
+  <div class="footer__inner">
+    <div class="footer__brand">
+      <span aria-hidden="true">♿</span> AccessiTrack
+    </div>
+    <p class="footer__copy">
+      © 2025 AccessiTrack. Built with care for the open web.
+    </p>
+    <nav class="footer__links" aria-label="Footer navigation">
+      <a routerLink="/login" class="footer__link">Sign in</a>
+      <a routerLink="/register" class="footer__link">Get started</a>
+    </nav>
+  </div>
+</footer>
