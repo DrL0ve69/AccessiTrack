@@ -1,0 +1,11 @@
+name: slice
+description: Generates a full Vertical Slice (Domain + Application + Infra + Client)
+---
+Act as the @architect.md and reference @CLAUDE.md. Create a feature for: "{{{ input }}}"
+
+1. **Domain:** `src/Server/Core.Domain/Entities/{{{ input }}}.cs` (Sealed, Primary Constructor).
+2. **Application:** `src/Server/Core.Application/Features/{{{ input }}}/Commands/Create{{{ input }}}Command.cs` (MediatR Handler + FluentValidator).
+3. **Infrastructure:** `src/Server/Infrastructure/Persistence/Configurations/{{{ input }}}Configuration.cs` (Fluent API Mapping).
+4. **Client:** `src/Client/features/{{{ input }}}/{{{ input }}}.component.ts` (Standalone, OnPush, Signals).
+
+Ensure C# 14 file-scoped namespaces and Angular 21 Signal patterns are used.

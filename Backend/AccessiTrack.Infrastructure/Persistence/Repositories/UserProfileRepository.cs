@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using AccessiTrack.Application.Common.Interfaces;
@@ -19,6 +19,9 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         => await context.UserProfiles
             .FirstOrDefaultAsync(x => x.IdentityId == identityId, ct);
 
+    public async Task<IReadOnlyList<UserProfile>> GetAllAsync(CancellationToken ct)
+        => await context.UserProfiles.ToListAsync(ct);
+
     public async Task UpdateAsync(UserProfile profile, CancellationToken ct)
     {
         context.UserProfiles.Update(profile);
@@ -30,7 +33,7 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         var profile = await context.UserProfiles.FindAsync(new object[] { profileId }, ct);
 
         // Doit vérifier si le profil existe avant de tenter de le supprimer et déclencher la suppression du appUser ou l'archiver?
-        if (profile != null)
+        if (profile is not null)
         {
             context.UserProfiles.Remove(profile);
             await context.SaveChangesAsync(ct);

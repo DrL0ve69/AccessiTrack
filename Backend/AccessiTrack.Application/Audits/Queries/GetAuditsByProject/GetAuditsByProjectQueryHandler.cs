@@ -27,7 +27,7 @@ public class GetAuditsByProjectQueryHandler
             a.Id,
             a.ProjectId,
             a.Status.ToString(),
-            a.StartedAt,
+            DateTime.Now,
             a.CompletedAt,
             a.Violations.Count,
             a.Violations.Count(v =>

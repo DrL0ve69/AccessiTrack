@@ -1,6 +1,6 @@
-using System.Text;
 using AccessiTrack.Application.Common.Interfaces;
 using AccessiTrack.Domain.Interfaces;
+using AccessiTrack.Infrastructure.Auditing;
 using AccessiTrack.Infrastructure.Identity;
 using AccessiTrack.Infrastructure.Persistence;
 using AccessiTrack.Infrastructure.Persistence.Repositories;
@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace AccessiTrack.Infrastructure;
 
@@ -61,6 +62,14 @@ public static class DependencyInjection
             };
         });
 
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        // Audit pipeline
+        services.AddSingleton<IAuditQueue, AuditQueue>();       // singleton — shared channel
+        services.AddScoped<IAuditRunner, PlaywrightAuditRunner>(); // scoped — holds DbContext
+        services.AddHostedService<AuditBackgroundService>();
+
         // Repositories
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IAuditRepository, AuditRepository>();
@@ -70,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+        services.AddScoped<IFileStorageService, FileStorageService>();
         //services.AddScoped<IAccessibilityScanner, AccessibilityScanner>();
         services.AddHttpClient<IAccessibilityScanner, AccessibilityScanner>();
 

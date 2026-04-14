@@ -1,0 +1,126 @@
+<div class="members-container">
+  <header class="members-header">
+    <h1>Équipe</h1>
+    <p>Consultez le profil des membres</p>
+  </header>
+
+  <!-- Search & Filter Form -->
+  <div class="search-filter" [formGroup]="filterForm">
+    <input
+      type="text"
+      placeholder="Rechercher par nom..."
+      formControlName="searchTerm"
+      class="search-input"
+      aria-label="Rechercher un membre par nom"
+    />
+
+    <select
+      formControlName="roleFilter"
+      class="role-select"
+      aria-label="Filtrer par rôle"
+    >
+      <option value="">Tous les rôles</option>
+      <option value="Admin">Administrateur</option>
+      <option value="Member">Membre</option>
+    </select>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading" role="status" aria-live="polite">
+      Chargement des membres...
+    </div>
+  } @else if (error()) {
+    <div class="error-message" role="alert">
+      {{ error() }}
+      <button (click)="retry()" class="btn-retry">Réessayer</button>
+    </div>
+  } @else {
+    <!-- Members Grid/List -->
+    <div class="members-grid">
+      @for (user of users(); track user.userId) {
+        <article class="member-card">
+          <a
+            [routerLink]="['/members', user.userId]"
+            class="card-link"
+            [attr.aria-label]="'Voir le profil de ' + user.fullName"
+          >
+            @if (user.avatar) {
+              <img
+                [src]="user.avatar"
+                [alt]="user.fullName"
+                class="member-avatar"
+              />
+            } @else {
+              <div class="member-avatar placeholder">
+                {{ getInitials(user.fullName) }}
+              </div>
+            }
+
+            <div class="card-content">
+              <h3 class="member-name">{{ user.fullName }}</h3>
+
+              @if (user.email) {
+                <p class="member-email">{{ user.email }}</p>
+              }
+
+              <div class="member-meta">
+                <span class="role-badge" [class.admin]="user.role === 'Admin'">
+                  {{ user.role === 'Admin' ? 'Admin' : 'Membre' }}
+                </span>
+              </div>
+
+              @if (user.bio) {
+                <p class="member-bio">{{ user.bio }}</p>
+              }
+            </div>
+          </a>
+        </article>
+      }
+    </div>
+
+    @if (users().length === 0) {
+      <div class="no-results" role="status">
+        <p>Aucun membre trouvé</p>
+      </div>
+    }
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button
+          (click)="previousPage()"
+          [disabled]="currentPage() === 1"
+          class="btn-pagination"
+          aria-label="Page précédente"
+        >
+          ← Précédent
+        </button>
+
+        <span class="page-info">
+          Page {{ currentPage() }} sur {{ totalPages() }}
+        </span>
+
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage() >= totalPages()"
+          class="btn-pagination"
+          aria-label="Page suivante"
+        >
+          Suivant →
+        </button>
+
+        <select
+          [(ngModel)]="pageSize"
+          (change)="onPageSizeChange()"
+          class="page-size-select"
+          aria-label="Nombre d'éléments par page"
+        >
+          <option [value]="10">10 par page</option>
+          <option [value]="20">20 par page</option>
+          <option [value]="50">50 par page</option>
+        </select>
+      </div>
+    }
+  }
+</div>

@@ -9,40 +9,43 @@ namespace AccessiTrack.Domain.Entities;
 
 public class Audit
 {
-    public Guid Id { get; private set; }
+    public Guid Id { get; private set; } = Guid.NewGuid();
     public Guid ProjectId { get; private set; }
-    public DateTime StartedAt { get; private set; }
+    public AuditStatus Status { get; private set; } = AuditStatus.Pending;
+    public int? Score { get; private set; }
+    public int ViolationCount { get; private set; }
+    public int PassCount { get; private set; }
+    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime? StartedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
-    public AuditStatus Status { get; private set; }
-    public string? Notes { get; private set; }
+    public string? ErrorMessage { get; private set; }
 
     public Project Project { get; private set; } = null!;
-    public ICollection<Violation> Violations { get; private set; } = new List<Violation>();
+    public ICollection<Violation> Violations { get; private set; } = [];
 
-    private Audit() { }
+    // Factory
+    public static Audit Create(Guid projectId) => new() { ProjectId = projectId };
 
-    public static Audit Start(Guid projectId)
+    // State machine
+    public void MarkInProgress()
     {
-        return new Audit
-        {
-            Id = Guid.NewGuid(),
-            ProjectId = projectId,
-            StartedAt = DateTime.UtcNow,
-            Status = AuditStatus.InProgress
-        };
+        Status = AuditStatus.InProgress;
+        StartedAt = DateTime.UtcNow;
     }
 
-    // Règle métier : ne peut pas être complété avec des violations critiques ouvertes
-    public void Complete()
+    public void Complete(int score, int violationCount, int passCount)
     {
-        bool hasOpenCritical = Violations.Any(v =>
-            v.Severity == ViolationSeverity.Critical && !v.IsResolved);
-
-        if (hasOpenCritical)
-            throw new DomainException(
-                "Impossible de terminer l'audit : des violations critiques sont encore ouvertes.");
-
         Status = AuditStatus.Completed;
+        Score = score;
+        ViolationCount = violationCount;
+        PassCount = passCount;
+        CompletedAt = DateTime.UtcNow;
+    }
+
+    public void Fail(string errorMessage)
+    {
+        Status = AuditStatus.Failed;
+        ErrorMessage = errorMessage;
         CompletedAt = DateTime.UtcNow;
     }
 }

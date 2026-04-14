@@ -8,7 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
   selector: 'app-login',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
+  styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
@@ -41,8 +41,7 @@ export class LoginComponent {
         next: () => {
           this.authService.fetchProfile().pipe(take(1)).subscribe(() => {
             this.router.navigate(['/profile']);
-          }
-          );
+          });
         },
         error: (error) => {
           this.errorMessage.set(error.message || 'Email ou mot de passe incorrect.');

@@ -96,7 +96,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         foreach (var svg in svgs)
         {
             var hasAriaLabel = svg.HasAttribute("aria-label") && !string.IsNullOrWhiteSpace(svg.GetAttribute("aria-label"));
-            var hasTitle = svg.QuerySelector("title") != null;
+            var hasTitle = svg.QuerySelector("title") is not null;
             var hasRoleNone = svg.GetAttribute("role") == "none" || svg.GetAttribute("role") == "presentation";
 
             if (!hasAriaLabel && !hasTitle && !hasRoleNone)
@@ -125,7 +125,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         {
             var textContent = link.TextContent.Trim();
             var hasAriaLabel = link.HasAttribute("aria-label") && !string.IsNullOrWhiteSpace(link.GetAttribute("aria-label"));
-            var hasImgWithAlt = link.QuerySelector("img[alt]") != null;
+            var hasImgWithAlt = link.QuerySelector("img[alt]") is not null;
 
             if (string.IsNullOrEmpty(textContent) && !hasAriaLabel && !hasImgWithAlt)
             {
@@ -153,7 +153,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         foreach (var input in inputs)
         {
             var id = input.GetAttribute("id");
-            var hasLabel = !string.IsNullOrEmpty(id) && document.QuerySelector($"label[for='{id}']") != null;
+            var hasLabel = !string.IsNullOrEmpty(id) && document.QuerySelector($"label[for='{id}']") is not null;
             var hasAriaLabel = input.HasAttribute("aria-label") && !string.IsNullOrWhiteSpace(input.GetAttribute("aria-label"));
             var hasAriaLabelledBy = input.HasAttribute("aria-labelledby");
             var hasTitle = input.HasAttribute("title") && !string.IsNullOrWhiteSpace(input.GetAttribute("title"));
@@ -175,7 +175,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         foreach (var textarea in textareas)
         {
             var id = textarea.GetAttribute("id");
-            var hasLabel = !string.IsNullOrEmpty(id) && document.QuerySelector($"label[for='{id}']") != null;
+            var hasLabel = !string.IsNullOrEmpty(id) && document.QuerySelector($"label[for='{id}']") is not null;
             var hasAriaLabel = textarea.HasAttribute("aria-label");
             var isInsideLabel = textarea.ParentElement?.TagName == "LABEL";
 
@@ -195,7 +195,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         foreach (var select in selects)
         {
             var id = select.GetAttribute("id");
-            var hasLabel = !string.IsNullOrEmpty(id) && document.QuerySelector($"label[for='{id}']") != null;
+            var hasLabel = !string.IsNullOrEmpty(id) && document.QuerySelector($"label[for='{id}']") is not null;
             var hasAriaLabel = select.HasAttribute("aria-label");
             var isInsideLabel = select.ParentElement?.TagName == "LABEL";
 
@@ -272,7 +272,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         var violations = new List<LogViolationCommand>();
 
         var htmlElement = document.QuerySelector("html");
-        if (htmlElement == null || !htmlElement.HasAttribute("lang") || string.IsNullOrWhiteSpace(htmlElement.GetAttribute("lang")))
+        if (htmlElement is null || !htmlElement.HasAttribute("lang") || string.IsNullOrWhiteSpace(htmlElement.GetAttribute("lang")))
         {
             violations.Add(CreateViolation(
                 "3.1.1",
@@ -441,8 +441,8 @@ public class AccessibilityScanner : IAccessibilityScanner
         var tables = document.QuerySelectorAll("table");
         foreach (var table in tables)
         {
-            var hasTh = table.QuerySelector("th") != null;
-            var hasScope = table.QuerySelector("th[scope]") != null;
+            var hasTh = table.QuerySelector("th") is not null;
+            var hasScope = table.QuerySelector("th[scope]") is not null;
 
             if (!hasTh)
             {
@@ -466,7 +466,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         var violations = new List<LogViolationCommand>();
 
         var titleElement = document.QuerySelector("title");
-        if (titleElement == null || string.IsNullOrWhiteSpace(titleElement.TextContent))
+        if (titleElement is null || string.IsNullOrWhiteSpace(titleElement.TextContent))
         {
             violations.Add(CreateViolation(
                 "2.4.2",
@@ -488,7 +488,7 @@ public class AccessibilityScanner : IAccessibilityScanner
         var violations = new List<LogViolationCommand>();
 
         var viewport = document.QuerySelector("meta[name='viewport']");
-        if (viewport == null)
+        if (viewport is null)
         {
             violations.Add(CreateViolation(
                 "1.4.10",

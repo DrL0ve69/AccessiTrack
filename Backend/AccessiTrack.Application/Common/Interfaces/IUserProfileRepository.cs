@@ -9,6 +9,7 @@ public interface IUserProfileRepository
 {
     Task AddAsync(UserProfile profile, CancellationToken ct);
     Task<UserProfile?> GetByIdentityIdAsync(string identityId, CancellationToken ct);
+    Task<IReadOnlyList<UserProfile>> GetAllAsync(CancellationToken ct);
     Task UpdateAsync(UserProfile profile, CancellationToken ct);
     Task DeleteAsync(Guid profileId, CancellationToken ct);
 }

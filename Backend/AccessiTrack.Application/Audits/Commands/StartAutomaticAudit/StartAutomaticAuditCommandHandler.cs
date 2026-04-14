@@ -47,7 +47,7 @@ public class StartAutomaticAuditCommandHandler
             throw new DomainException("Project has no TargetUrl configured for automatic scanning.");
 
         // 2. Create and save the audit
-        var audit = Audit.Start(request.ProjectId);
+        var audit = Audit.Create(request.ProjectId);
         await _auditRepository.AddAsync(audit, cancellationToken);
         await _auditRepository.SaveChangesAsync(cancellationToken);
 
@@ -96,7 +96,7 @@ public class StartAutomaticAuditCommandHandler
         if (violationsFound == 0)
         {
             // Mark as completed if no violations
-            audit.Complete();
+            audit.Complete(audit.Score ?? 0, audit.ViolationCount, audit.Violations.Count);
             await _auditRepository.UpdateAsync(audit, cancellationToken);
             await _auditRepository.SaveChangesAsync(cancellationToken);
         }

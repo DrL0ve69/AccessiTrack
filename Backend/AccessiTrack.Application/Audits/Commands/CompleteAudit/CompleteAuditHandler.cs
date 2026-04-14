@@ -20,7 +20,7 @@ public class CompleteAuditCommandHandler : IRequestHandler<CompleteAuditCommand,
         if (audit is null)
             throw new Exception($"Audit {request.AuditId} introuvable.");
 
-        audit.Complete();
+        audit.Complete(audit.Score ?? 0, audit.ViolationCount, audit.PassCount);
 
         await _auditRepository.UpdateAsync(audit, cancellationToken);
         await _auditRepository.SaveChangesAsync(cancellationToken);

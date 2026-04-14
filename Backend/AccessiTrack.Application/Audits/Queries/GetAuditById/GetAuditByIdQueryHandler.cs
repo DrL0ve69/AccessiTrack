@@ -4,33 +4,26 @@ using MediatR;
 
 namespace AccessiTrack.Application.Audits.Queries.GetAuditById;
 
-public class GetAuditByIdQueryHandler
+public class GetAuditByIdQueryHandler(IAuditRepository repository)
     : IRequestHandler<GetAuditByIdQuery, AuditDetailsDto>
 {
-    private readonly IAuditRepository _repository;
-
-    public GetAuditByIdQueryHandler(IAuditRepository repository)
-    {
-        _repository = repository;
-    }
-
     public async Task<AuditDetailsDto> Handle(
         GetAuditByIdQuery request,
         CancellationToken cancellationToken)
     {
-        var audit = await _repository.GetByIdAsync(
+        var audit = await repository.GetByIdAsync(
             request.AuditId, cancellationToken);
 
-        if (audit == null)
+        if (audit is null)
             throw new NotFoundException($"Audit with ID {request.AuditId} not found.", request.AuditId);
 
         return new AuditDetailsDto(
             audit.Id,
             audit.ProjectId,
             audit.Status.ToString(),
-            audit.StartedAt,
+            DateTime.Now,
             audit.CompletedAt,
-            audit.Notes,
+            audit.Score.ToString(),
             audit.Violations.Count,
             audit.Violations.Count(v =>
                 v.Severity == Domain.Enums.ViolationSeverity.Critical

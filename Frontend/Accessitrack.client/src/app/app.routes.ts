@@ -21,11 +21,10 @@ import { publicGuard } from './core/guards/public.guard';
  * 7. Backend validates JWT token
  */
 export const routes: Routes = [
-  // ====== Root Redirect ======
   {
     path: '',
-    redirectTo: 'dashboard',
-    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/home/home').then(m => m.HomeComponent),
   },
 
   // ====== Public Routes (publicGuard ensures unauthenticated users only) ======
@@ -61,7 +60,7 @@ export const routes: Routes = [
   {
     path: 'profile',
     loadComponent: () =>
-      import('./features/profile/user-profile').then(
+      import('./features/profile/user-profile.component').then(
         (m) => m.UserProfileComponent
       ),
     canActivate: [authGuard],
@@ -128,6 +127,30 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
     title: 'Nouvelle violation — AccessiTrack',
+  },
+
+  // ====== Members Routes ======
+  {
+    path: 'members',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/members/members-list.component').then(
+            (m) => m.MembersListComponent
+          ),
+        title: 'Équipe — AccessiTrack',
+      },
+      {
+        path: ':userId',
+        loadComponent: () =>
+          import('./features/members/member-detail.component').then(
+            (m) => m.MemberDetailComponent
+          ),
+        title: 'Profil du membre — AccessiTrack',
+      },
+    ],
   },
 
   // ====== Wildcard - Catch-all ======

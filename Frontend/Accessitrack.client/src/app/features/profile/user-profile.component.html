@@ -1,0 +1,223 @@
+<div class="profile-container">
+  <div class="profile-content">
+    <!-- Header -->
+    <header class="profile-header">
+      <h1>Mon Profil</h1>
+      <p>Gérez vos informations personnelles</p>
+    </header>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading" role="status" aria-live="polite">
+        Chargement du profil...
+      </div>
+    } @else if (error()) {
+      <div class="error-message" role="alert">
+        {{ error() }}
+        <button (click)="dismissError()" class="btn-dismiss">✕</button>
+      </div>
+    } @else {
+      <form [formGroup]="profileForm" (ngSubmit)="onSave()" class="profile-form">
+        <!-- Avatar Section -->
+        <section class="form-section">
+          <h2>Photo de profil</h2>
+
+          <div class="avatar-container">
+            @if (previewUrl()) {
+              <img
+                [src]="previewUrl()"
+                alt="Aperçu de la photo"
+                class="profile-avatar"
+              />
+            } @else if (profile()?.avatar) {
+              <img
+                [src]="profile()!.avatar"
+                alt="Photo de profil"
+                class="profile-avatar"
+              />
+            } @else {
+              <div class="profile-avatar placeholder">
+                {{ getInitials(profile()!.fullName) }}
+              </div>
+            }
+
+            <input
+              type="file"
+              #avatarInput
+              hidden
+              accept="image/*"
+              (change)="onAvatarSelected($event)"
+              aria-label="Choisir une photo de profil"
+            />
+
+            <button
+              type="button"
+              (click)="avatarInput.click()"
+              class="btn-upload"
+              [disabled]="isUploadingAvatar()"
+            >
+              @if (isUploadingAvatar()) {
+                Envoi...
+              } @else {
+                Changer la photo
+              }
+            </button>
+          </div>
+        </section>
+
+        <!-- Personal Info Section -->
+        <section class="form-section">
+          <h2>Informations personnelles</h2>
+
+          <div class="form-group">
+            <label for="fullName">Nom complet</label>
+            <input
+              id="fullName"
+              type="text"
+              formControlName="fullName"
+              class="input-field"
+              required
+            />
+            @if (profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched) {
+              <span class="error-text">Le nom est requis</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              [value]="profile()!.email"
+              disabled
+              class="input-field disabled"
+            />
+            <span class="help-text">L'email ne peut pas être modifié</span>
+          </div>
+
+          <div class="form-group">
+            <label for="phoneNumber">Téléphone</label>
+            <input
+              id="phoneNumber"
+              type="tel"
+              formControlName="phoneNumber"
+              class="input-field"
+              placeholder="+1 (555) 123-4567"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="bio">Bio</label>
+            <textarea
+              id="bio"
+              formControlName="bio"
+              class="input-field"
+              rows="4"
+              placeholder="Parlez-nous de vous..."
+              maxlength="500"
+            ></textarea>
+            <span class="help-text">
+              {{ profileForm.get('bio')?.value?.length || 0 }} / 500
+            </span>
+          </div>
+        </section>
+
+        <!-- Privacy Section -->
+        <section class="form-section">
+          <h2>Confidentialité</h2>
+
+          <div class="privacy-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                formControlName="emailPrivate"
+                class="checkbox-input"
+              />
+              <span>Masquer mon email aux autres utilisateurs</span>
+            </label>
+          </div>
+
+          <div class="privacy-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                formControlName="phonePrivate"
+                class="checkbox-input"
+              />
+              <span>Masquer mon téléphone aux autres utilisateurs</span>
+            </label>
+          </div>
+
+          <div class="privacy-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                formControlName="bioPrivate"
+                class="checkbox-input"
+              />
+              <span>Masquer ma bio aux autres utilisateurs</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Preferences Section -->
+        <section class="form-section">
+          <h2>Préférences</h2>
+
+          <div class="form-group">
+            <label for="language">Langue préférée</label>
+            <select
+              id="language"
+              formControlName="preferredLanguage"
+              class="input-field"
+            >
+              <option value="fr-CA">Français (Canada)</option>
+              <option value="en-US">English (US)</option>
+            </select>
+          </div>
+
+          <div class="privacy-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                formControlName="highContrastEnabled"
+                class="checkbox-input"
+              />
+              <span>Activer le mode contraste élevé</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="isSaving() || profileForm.invalid"
+          >
+            @if (isSaving()) {
+              Sauvegarde en cours...
+            } @else {
+              Sauvegarder les modifications
+            }
+          </button>
+
+          <button
+            type="button"
+            (click)="onDeleteProfile()"
+            class="btn btn-danger"
+            [disabled]="isSaving()"
+          >
+            Supprimer le compte
+          </button>
+        </div>
+
+        @if (successMessage()) {
+          <div class="success-message" role="status">
+            {{ successMessage() }}
+          </div>
+        }
+      </form>
+    }
+  </div>
+</div>

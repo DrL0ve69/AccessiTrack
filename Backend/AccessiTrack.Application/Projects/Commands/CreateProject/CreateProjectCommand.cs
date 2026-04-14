@@ -10,4 +10,6 @@ public record CreateProjectCommand(
     string Name,
     string TargetUrl,
     string ClientName
-) : IRequest<Guid>;
+) : IRequest<CreateProjectResponse>;
+
+public record CreateProjectResponse(Guid ProjectId, Guid AuditId);

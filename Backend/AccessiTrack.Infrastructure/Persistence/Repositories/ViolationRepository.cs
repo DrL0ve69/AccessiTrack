@@ -35,4 +35,9 @@ public class ViolationRepository : IViolationRepository
 
     public async Task<int> SaveChangesAsync(CancellationToken ct = default)
         => await _context.SaveChangesAsync(ct);
+
+    public Task AddRangeAsync(IEnumerable<Violation> violations, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
 }

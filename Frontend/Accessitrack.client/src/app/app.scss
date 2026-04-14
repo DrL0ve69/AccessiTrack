@@ -2,25 +2,30 @@
   display: block;
 }
 
-.app-container {
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden; // Empêche le scroll global "cassé"
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  overflow-y: auto; // C'est ici que le contenu défilera
+.app-main {
+  min-height: 100vh;
   background-color: var(--color-gray-50);
+  padding: 2rem 1rem;
   display: flex;
   flex-direction: column;
+
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 }
 
-/* Version mobile */
-@media (max-width: 768px) {
-  .content-area {
-    margin-left: 0;
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+
+  &:focus {
+    top: 0;
   }
 }

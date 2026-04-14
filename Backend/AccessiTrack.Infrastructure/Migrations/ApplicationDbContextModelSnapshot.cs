@@ -31,17 +31,29 @@ namespace AccessiTrack.Infrastructure.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Notes")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<int>("PassCount")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Score")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ViolationCount")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -89,12 +101,27 @@ namespace AccessiTrack.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Avatar")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("BioPrivate")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailPrivate")
+                        .HasColumnType("bit");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -107,9 +134,21 @@ namespace AccessiTrack.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhonePrivate")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PreferredLanguage")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 

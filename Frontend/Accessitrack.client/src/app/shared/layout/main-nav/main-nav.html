@@ -1,0 +1,90 @@
+<header class="main-nav" [class.high-contrast]="highContrast()">
+  <div class="nav-container">
+    <!-- Logo/Brand -->
+    <div class="nav-brand">
+      <a routerLink="/dashboard" class="logo" aria-label="AccessiTrack - Retourner au tableau de bord">
+        <span class="logo-icon" aria-hidden="true">♿</span>
+        <span class="logo-text">AccessiTrack</span>
+      </a>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-toggle"
+            [attr.aria-expanded]="mobileMenuOpen()"
+            aria-label="Basculer le menu mobile"
+            (click)="toggleMobileMenu()">
+      <span class="hamburger" aria-hidden="true">☰</span>
+    </button>
+
+    <!-- Navigation Menu -->
+    <nav class="nav-menu"
+         [class.open]="mobileMenuOpen()"
+         (click)="closeMobileMenu()">
+      <ul class="nav-items">
+        @if (isAuthenticated()) {
+          <li>
+            <a routerLink="/dashboard"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{ exact: true }"
+               aria-label="Tableau de bord">
+              <span aria-hidden="true">📊</span>
+              Tableau de bord
+            </a>
+          </li>
+          <li>
+            <a routerLink="/projects"
+               routerLinkActive="active"
+               aria-label="Projets">
+              <span aria-hidden="true">📁</span>
+              Projets
+            </a>
+          </li>
+          <li>
+            <a routerLink="/members"
+               routerLinkActive="active"
+               aria-label="Équipe">
+              <span aria-hidden="true">👥</span>
+              Équipe
+            </a>
+          </li>
+          @if (isAdmin()) {
+            <li>
+              <a routerLink="/admin"
+                 routerLinkActive="active"
+                 aria-label="Administration">
+                <span aria-hidden="true">⚙️</span>
+                Administration
+              </a>
+            </li>
+          }
+        }
+      </ul>
+    </nav>
+
+    <!-- User Menu (Right side) -->
+    <div class="nav-right">
+      @if (isAuthenticated() && user()) {
+        <div class="user-menu">
+          <a routerLink="/profile"
+             class="user-link"
+             [attr.aria-label]="'Profil de ' + user()!.email"
+             (click)="closeMobileMenu()">
+            <span class="user-icon" aria-hidden="true">👤</span>
+            <span class="user-email">{{ user()!.email }}</span>
+          </a>
+          <button class="logout-btn"
+                  (click)="logout()"
+                  aria-label="Se déconnecter">
+            <span aria-hidden="true">🚪</span>
+            Déconnexion
+          </button>
+        </div>
+      } @else {
+        <div class="auth-links">
+          <a routerLink="/login" class="btn-link" aria-label="Se connecter">Connexion</a>
+          <a routerLink="/register" class="btn-link btn-primary" aria-label="S'inscrire">Inscription</a>
+        </div>
+      }
+    </div>
+  </div>
+</header>

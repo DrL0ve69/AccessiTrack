@@ -1,14 +1,10 @@
 <a class="skip-link" href="#main-content">Aller au contenu principal</a>
 
-<div class="app-container">
+<app-main-nav></app-main-nav>
 
-  <app-sidebar />
-  
-
-  <main id="main-content" 
-        tabindex="-1" 
-        role="main" 
-        class="content-area">
-    <router-outlet />
-  </main>
-</div>
+<main id="main-content"
+      tabindex="-1"
+      role="main"
+      class="app-main">
+  <router-outlet />
+</main>
