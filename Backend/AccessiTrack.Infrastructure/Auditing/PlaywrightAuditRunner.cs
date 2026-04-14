@@ -61,7 +61,7 @@ public class PlaywrightAuditRunner(
             var results = JsonSerializer.Deserialize<AxeResults>(json)
                 ?? throw new InvalidOperationException("Failed to deserialize axe results.");
 
-            var violations = BuildViolations(auditId, results.Violations);
+            var violations = await BuildViolations(auditId, results.Violations);
             var score = CalculateScore(results.Violations, results.Passes.Count);
 
             await violationRepository.AddRangeAsync(violations, ct);
@@ -83,7 +83,7 @@ public class PlaywrightAuditRunner(
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
-    private static List<Violation> BuildViolations(
+    private static async Task<List<Violation>> BuildViolations(
         Guid auditId, IEnumerable<AxeRule> axeViolations)
     {
         var list = new List<Violation>();
@@ -99,7 +99,7 @@ public class PlaywrightAuditRunner(
                 list.Add(Violation.Report(
                     auditId,
                     rule.Id,
-                    node.FailureSummary ?? string.Empty,
+                    wcag ?? string.Empty,
                     node.Html,
                     rule.Description,
                     severity));

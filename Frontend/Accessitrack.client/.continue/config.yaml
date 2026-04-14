@@ -1,0 +1,14 @@
+# AccessiTrack Frontend Continue Configuration
+# This extends the project-level config at ../../.continue/config.yaml
+
+name: AccessiTrack Frontend
+version: 1.0.0
+schema: v1
+
+# Frontend-specific rules
+rules:
+  - "Use Angular standalone components (no NgModules)"
+  - "Use signals for state management"
+  - "Follow WCAG AA accessibility standards"
+  - "Use Angular Material components"
+  - "Implement proper focus management for accessibility"

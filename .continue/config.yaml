@@ -1,0 +1,35 @@
+# AccessiTrack Project-Specific Continue Configuration
+# Inherits from: C:\Users\phili\.continue\config.yaml
+#
+# This file only contains overrides and project-specific settings.
+# Model definitions and API keys come from the global config.
+
+name: AccessiTrack
+version: 1.0.0
+schema: v1
+
+# Project-specific MCP servers
+mcpServers:
+  - name: angular-cli
+    command: npx
+    args:
+      - -y
+      - "@angular/cli"
+      - mcp
+    env: {}
+
+# Project-specific context
+contextProviders:
+  - name: file
+    params:
+      - name: AccessiTrackBackend
+        description: .NET Backend with Clean Architecture
+      - name: AccessiTrackFrontend
+        description: Angular 21 frontend with Material Design
+
+# Custom rules for this project
+rules:
+  - "Follow Clean Architecture with CQRS patterns"
+  - "Use MediatR for all application logic"
+  - "Follow WCAG AA accessibility standards"
+  - "Use Angular standalone components with signals"

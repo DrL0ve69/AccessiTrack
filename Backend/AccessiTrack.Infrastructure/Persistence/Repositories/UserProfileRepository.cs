@@ -33,7 +33,7 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
         var profile = await context.UserProfiles.FindAsync(new object[] { profileId }, ct);
 
         // Doit vérifier si le profil existe avant de tenter de le supprimer et déclencher la suppression du appUser ou l'archiver?
-        if (profile != null)
+        if (profile is not null)
         {
             context.UserProfiles.Remove(profile);
             await context.SaveChangesAsync(ct);

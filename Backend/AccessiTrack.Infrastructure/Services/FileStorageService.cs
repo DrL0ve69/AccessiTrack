@@ -28,7 +28,7 @@ public class FileStorageService : IFileStorageService
     public async Task<string> UploadAvatarAsync(IFormFile file, Guid userId, CancellationToken cancellationToken)
     {
         // Validate file
-        if (file == null || file.Length == 0)
+        if (file is null || file.Length == 0)
             throw new InvalidOperationException("File is empty");
 
         if (file.Length > MaxFileSize)

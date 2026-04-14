@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "edit(//c/Users/phili/ProjetsPortfolio/2026/Templates/**)"
+      "Bash(dotnet build:*)",
+      "Bash(npm run:*)",
+      "Bash(ng serve:*)",
+      "edit(C:/Users/phili/ProjetsPortfolio/2026/Templates/AccessiTrack/**)"
     ]
+  },
+  "projectGuidance": {
+    "architecture": "Clean Architecture with CQRS",
+    "backend": ".NET 10 with MediatR",
+    "frontend": "Angular 21 with Material",
+    "database": "SQL Server LocalDB"
   }
 }

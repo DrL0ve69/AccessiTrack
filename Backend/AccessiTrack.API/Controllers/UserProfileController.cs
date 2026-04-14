@@ -236,7 +236,7 @@ public class UserProfileController(
         if (userGuid != requestingUserGuid && !isAdmin)
             return Forbid();
 
-        if (file == null || file.Length == 0)
+        if (file is null || file.Length == 0)
             return BadRequest("No file provided");
 
         try
