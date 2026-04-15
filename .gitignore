@@ -46,13 +46,12 @@ yarn-debug.log*
 yarn-error.log*
 .npm
 .yarn-integrity
-/Frontend/accessitrack-client/.angular/
+/Frontend/accessitrack.client/.angular/
 
 # ========================================
 # SECRETS & CONFIGURATION (CRITIQUE ⚠️)
 # Ne JAMAIS commiter ces fichiers
 # ========================================
-**/appsettings.json
 **/appsettings.Development.json
 **/appsettings.Staging.json
 **/appsettings.Production.json
