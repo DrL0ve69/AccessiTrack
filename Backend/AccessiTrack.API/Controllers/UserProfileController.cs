@@ -22,7 +22,7 @@ public class UserProfileController(
     /// <summary>
     /// Get currently authenticated user's full profile
     /// </summary>
-    [HttpGet("me")]
+    [HttpGet("profile")]
     [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserProfileDto>> GetCurrentProfile(CancellationToken cancellationToken)

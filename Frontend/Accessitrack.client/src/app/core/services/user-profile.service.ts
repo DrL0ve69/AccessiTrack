@@ -33,7 +33,7 @@ export class UserProfileService {
    * Get current authenticated user's full profile
    */
   getCurrentProfile(): Observable<UserProfileDto> {
-    return this.http.get<UserProfileDto>(`${this.apiUrl}/me`);
+    return this.http.get<UserProfileDto>(`${this.apiUrl}/profile`);
   }
 
   /**
