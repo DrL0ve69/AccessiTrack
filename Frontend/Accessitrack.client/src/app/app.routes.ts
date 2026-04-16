@@ -25,6 +25,7 @@ export const routes: Routes = [
     path: '',
     loadComponent: () =>
       import('./features/home/home').then(m => m.HomeComponent),
+    title: 'Accueil — AccessiTrack',
   },
 
   // ====== Public Routes (publicGuard ensures unauthenticated users only) ======

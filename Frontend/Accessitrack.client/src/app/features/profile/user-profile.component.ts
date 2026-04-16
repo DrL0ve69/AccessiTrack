@@ -108,7 +108,7 @@ export class UserProfileComponent {
 
     this.userProfileService
       .uploadAvatar(userId, file)
-      .pipe(takeUntilDestroyed())
+      .pipe()
       .subscribe({
         next: (response) => {
           this.profile.update((p) =>
