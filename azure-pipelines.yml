@@ -5,7 +5,7 @@ trigger:
       - dev
 
 pool:
-  name: Default # Laissez Default si vous utilisez votre propre agent, sinon mettez ubuntu-latest
+  name: Default
 
 # Chargement du groupe de variables globalement
 variables:
@@ -19,7 +19,7 @@ variables:
 
 stages:
 - stage: Build_And_Test
-  displayName: 'Build Backend et Frontend'
+  displayName: 'Build et Tests'
   jobs:
   - job: Backend
     displayName: 'Backend .NET 10'
@@ -50,20 +50,19 @@ stages:
         artifactName: api
 
   - job: Frontend
-    displayName: 'Frontend Angular (Test de build pour Vercel)'
+    displayName: 'Frontend Angular'
     steps:
     - task: UseNode@1
       displayName: 'Installer Node.js'
       inputs:
         version: $(nodeVersion)
         
-    - script: |
+    - powershell: |
         cd Frontend/Accessitrack.client
         npm install
         npx ng build --configuration production
       displayName: 'npm install et ng build'
       
-    # On publie l'artefact frontend juste au cas où, même si Vercel gère le déploiement réel
     - task: PublishBuildArtifacts@1
       displayName: 'Publier artefact Frontend'
       inputs:
@@ -71,22 +70,50 @@ stages:
         artifactName: frontend
 
 - stage: Deploy_Production
-  displayName: 'Deploiement API Production'
+  displayName: 'Deploiement Production'
   dependsOn: Build_And_Test
   # S'exécute uniquement si le build réussit et qu'on est sur la branche main
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   jobs:
   - job: Deploy_API
-    displayName: 'Deployer API .NET sur Azure App Service'
+    displayName: 'Deployer API via Kudu'
     steps:
     - download: current
       artifact: api
 
-    # Remplacement de l'ancien script 'curl' instable par la tâche officielle Azure DevOps
-    - task: AzureWebApp@1
-      displayName: 'Déploiement vers Azure Web App'
+    - task: ArchiveFiles@2
+      displayName: 'Créer l archive ZIP pour déploiement'
       inputs:
-        azureSubscription: 'AccessiTrack-Deploy-Conn' # ⚠️ À MODIFIER
-        appType: 'webAppLinux' # Mettez 'webApp' si votre serveur Azure est sous Windows
-        appName: 'accessitrack-api'
-        package: '$(Pipeline.Workspace)/api'
+        rootFolderOrFile: '$(Pipeline.Workspace)/api'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/deploy.zip'
+        replaceExistingArchive: true
+
+    - task: PowerShell@2
+      displayName: 'Push Zip via Kudu API (avec curl)'
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Nettoyage de l'URL
+          $urlBase = "$(AZ_URL)".Replace("https://", "").TrimEnd('/')
+          $fullUrl = "https://$urlBase/api/zipdeploy"
+          $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
+          
+          Write-Host "Cible : $fullUrl"
+          Write-Host "Envoi du fichier ZIP avec curl.exe..."
+          
+          # Utilisation de curl.exe natif
+          curl.exe -f -X POST -u "$($env:DEPLOY_USER):$($env:DEPLOY_PWD)" --data-binary "@$zipPath" "$fullUrl"
+          
+          # Vérification du résultat de curl
+          if ($LASTEXITCODE -eq 0) {
+              Write-Host "##[section]DÉPLOIEMENT TERMINÉ AVEC SUCCÈS"
+          } else {
+              Write-Host "##[error] ÉCHEC DU DÉPLOIEMENT avec curl. Code d'erreur : $LASTEXITCODE"
+              exit 1
+          }
+      env:
+        # MAPPAGE OBLIGATOIRE DES SECRETS
+        DEPLOY_USER: $(AZ_USER)
+        DEPLOY_PWD: $(AZ_PWD)
