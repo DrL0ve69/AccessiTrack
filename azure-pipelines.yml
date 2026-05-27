@@ -51,10 +51,10 @@ stages:
   - job: Frontend
     displayName: 'Frontend Angular'
     steps:
-    - task: NodeTool@0
+    - task: UseNode@1
       displayName: 'Installer Node.js'
       inputs:
-        versionSpec: $(nodeVersion)
+        version: $(nodeVersion)
         
     - powershell: |
         cd Frontend/Accessitrack.client
@@ -94,15 +94,26 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          # Nettoyage de l'URL au cas où
+          # 1. FORCER TLS 1.2 (Règle le problème de connexion fermée)
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+          # Nettoyage de l'URL
           $urlBase = "$(AZ_URL)".Replace("https://", "").TrimEnd('/')
           $fullUrl = "https://$urlBase/api/zipdeploy"
           $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
           
+          # 2. VÉRIFICATION DE LA TAILLE DU ZIP (Pour le diagnostic)
+          if (Test-Path $zipPath) {
+              $fileSize = (Get-Item $zipPath).Length / 1MB
+              Write-Host "Fichier ZIP trouvé. Taille : [ $fileSize MB ]"
+          } else {
+              Write-Host "##[error] Fichier ZIP introuvable à l'emplacement : $zipPath"
+              exit 1
+          }
+
           Write-Host "Cible : $fullUrl"
           
-          # Préparation de l'authentification Basic (User:Password)
-          # On utilise $env: pour lire les variables injectées par le bloc 'env' plus bas
+          # Préparation de l'authentification Basic
           $pair = "$($env:DEPLOY_USER):$($env:DEPLOY_PWD)"
           $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
           $base64 = [Convert]::ToBase64String($bytes)
@@ -113,7 +124,8 @@ stages:
           
           try {
               Write-Host "Envoi du fichier ZIP..."
-              Invoke-RestMethod -Uri $fullUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300
+              # Utilisation de -Verbose pour voir ce qui se passe sous le capot
+              Invoke-RestMethod -Uri $fullUrl -Method Post -Headers $headers -InFile $zipPath -ContentType "application/zip" -TimeoutSec 300 -Verbose
               Write-Host "##[section]DÉPLOIEMENT TERMINÉ AVEC SUCCÈS"
           }
           catch {
@@ -124,6 +136,5 @@ stages:
               exit 1
           }
       env:
-        # MAPPAGE OBLIGATOIRE DES SECRETS
         DEPLOY_USER: $(AZ_USER)
         DEPLOY_PWD: $(AZ_PWD)
