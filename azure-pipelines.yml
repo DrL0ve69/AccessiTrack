@@ -23,6 +23,8 @@ stages:
   jobs:
   - job: Backend
     displayName: 'Backend .NET 10'
+    workspace:
+      clean: all
     steps:
     - checkout: self
       clean: true
