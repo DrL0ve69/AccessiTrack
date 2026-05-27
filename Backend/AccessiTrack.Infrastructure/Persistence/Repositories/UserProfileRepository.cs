@@ -32,10 +32,14 @@ public class UserProfileRepository(ApplicationDbContext context) : IUserProfileR
     {
         var profile = await context.UserProfiles.FindAsync(new object[] { profileId }, ct);
 
-        // Doit vérifier si le profil existe avant de tenter de le supprimer et déclencher la suppression du appUser ou l'archiver?
         if (profile is not null)
         {
-            context.UserProfiles.Remove(profile);
+            // On ne fait pas context.UserProfiles.Remove(profile);
+            // On fait un Soft Delete :
+            profile.IsDeleted = true;
+            profile.DeletedAt = DateTime.UtcNow;
+
+            context.UserProfiles.Update(profile);
             await context.SaveChangesAsync(ct);
         }
     }

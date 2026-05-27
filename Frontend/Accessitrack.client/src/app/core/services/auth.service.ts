@@ -113,11 +113,20 @@ export class AuthService {
   }
 
   fetchProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.apiUrl}/profile`).pipe(
+    return this.http.get<UserProfile>(`${this.apiUrl}/me`).pipe(
       tap((profile) => this._profile.set(profile)),
-      catchError((err) => {
-        console.error('Erreur lors de la récupération du profil', err);
-        return throwError(() => err);
+      catchError((err) => 
+      {
+        // On extrait le message pour éviter le crash "Object Object"
+        const errorMessage = err.error?.message || err.statusText || 'Erreur inconnue';
+        console.error('Erreur profil:', errorMessage);
+
+        // Optionnel : si c'est une 401 ou 404 sur le profil, on peut déconnecter
+        if (err.status === 401 || err.status === 404) {
+          // this.logout();
+        }
+
+        return throwError(() => err); // On renvoie l'objet complet pour le composant
       }),
     );
   }

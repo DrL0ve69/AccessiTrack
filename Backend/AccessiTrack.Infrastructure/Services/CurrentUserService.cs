@@ -16,6 +16,11 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor)
             .User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? string.Empty;
 
+    public string Email =>
+        httpContextAccessor.HttpContext?
+            .User.FindFirstValue(ClaimTypes.Email)
+        ?? string.Empty;
+
     public bool IsAdmin =>
         httpContextAccessor.HttpContext?
             .User.IsInRole(Roles.Admin)

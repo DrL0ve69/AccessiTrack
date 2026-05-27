@@ -20,11 +20,20 @@ import { publicGuard } from './core/guards/public.guard';
  * 6. AuthInterceptor adds Bearer token to all requests
  * 7. Backend validates JWT token
  */
-export const routes: Routes = [
+export const routes: Routes = 
+[
+  //====== Home routes, page d'accueil ======
+  {
+    path: 'home',
+    loadComponent: () =>
+      import('./features/home/home').then(m => m.HomeComponent),
+    title: 'Accueil — AccessiTrack',
+  },
   {
     path: '',
     loadComponent: () =>
       import('./features/home/home').then(m => m.HomeComponent),
+    title: 'Accueil — AccessiTrack',
   },
 
   // ====== Public Routes (publicGuard ensures unauthenticated users only) ======
@@ -58,7 +67,7 @@ export const routes: Routes = [
     title: 'Tableau de bord — AccessiTrack',
   },
   {
-    path: 'profile',
+    path: 'me',
     loadComponent: () =>
       import('./features/profile/user-profile.component').then(
         (m) => m.UserProfileComponent
@@ -156,6 +165,6 @@ export const routes: Routes = [
   // ====== Wildcard - Catch-all ======
   {
     path: '**',
-    redirectTo: 'dashboard',
+    redirectTo: 'home',
   },
 ];

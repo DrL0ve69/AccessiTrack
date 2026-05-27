@@ -17,7 +17,7 @@ export const publicGuard: CanActivateFn = () => {
     return true;
   }
 
-  // User already authenticated, redirect to dashboard
-  router.navigate(['/dashboard']);
+  // User already authenticated, redirect to home
+  router.navigate(['/me']);
   return false;
 };

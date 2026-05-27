@@ -1,6 +1,6 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { throwError } from 'rxjs';
+import { throwError, catchError } from 'rxjs';
 
 /**
  * HTTP Error Interceptor: Handles API error responses and provides consistent error handling.
@@ -72,6 +72,3 @@ export interface HttpApiError {
   errors?: { [key: string]: string[] };
   timestamp: Date;
 }
-
-// Import catchError from rxjs to use in the interceptor
-import { catchError } from 'rxjs';

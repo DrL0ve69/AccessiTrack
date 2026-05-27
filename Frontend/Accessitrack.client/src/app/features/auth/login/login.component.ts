@@ -40,7 +40,7 @@ export class LoginComponent {
       .subscribe({
         next: () => {
           this.authService.fetchProfile().pipe(take(1)).subscribe(() => {
-            this.router.navigate(['/profile']);
+            this.router.navigate(['/me']);
           });
         },
         error: (error) => {
