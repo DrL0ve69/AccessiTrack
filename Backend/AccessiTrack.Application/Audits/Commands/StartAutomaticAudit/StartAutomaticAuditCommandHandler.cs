@@ -48,6 +48,10 @@ public class StartAutomaticAuditCommandHandler
 
         // 2. Create and save the audit
         var audit = Audit.Create(request.ProjectId);
+
+        // Ajoutez cette ligne pour initialiser StartedAt et Status avant la sauvegarde SQL
+        audit.MarkInProgress();
+
         await _auditRepository.AddAsync(audit, cancellationToken);
         await _auditRepository.SaveChangesAsync(cancellationToken);
 

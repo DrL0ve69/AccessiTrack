@@ -17,8 +17,7 @@ public class AuditConfiguration : IEntityTypeConfiguration<Audit>
             .IsRequired()
             .HasConversion<int>();
 
-        builder.Property(a => a.StartedAt)
-            .IsRequired();
+        builder.Property(a => a.StartedAt).IsRequired(false);
 
         builder.Property(a => a.ErrorMessage)
             .HasMaxLength(1000);
