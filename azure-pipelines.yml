@@ -1,119 +1,86 @@
-trigger:
-  branches:
-    include:
+name: Build and deploy Full Stack (AccessiTrack)
+
+on:
+  push:
+    branches:
       - main
       - dev
+  workflow_dispatch:
 
-pool:
-  name: Default
-
-# Chargement du groupe de variables globalement
-variables:
-  - group: accessitrack-secrets
-  - name: buildConfiguration
-    value: 'Release'
-  - name: dotnetVersion
-    value: '10.0.x'
-  - name: nodeVersion
-    value: '22.x'
-
-stages:
-- stage: Build_And_Test
-  displayName: 'Build et Tests'
-  jobs:
-  - job: Backend
-    displayName: 'Backend .NET 10'
-    workspace:
-      clean: all
+jobs:
+  # ----------------------------------------
+  # 1. BUILD DU BACKEND (.NET 10)
+  # ----------------------------------------
+  build-backend:
+    runs-on: ubuntu-latest
     steps:
-    - checkout: self
-      clean: true
-    - task: UseDotNet@2
-      displayName: 'Installer .NET 10'
-      inputs:
-        version: $(dotnetVersion)
-        
-    - script: dotnet restore Backend/AccessiTrack.slnx
-      displayName: 'Restore NuGet packages'
-      
-    - script: dotnet build Backend/AccessiTrack.slnx --configuration $(buildConfiguration) --no-restore
-      displayName: 'Build solution'
-      
-    - script: dotnet publish Backend/AccessiTrack.API --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api
-      displayName: 'Publish API'
-      
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publier artefact API'
-      inputs:
-        pathToPublish: $(Build.ArtifactStagingDirectory)/api
-        artifactName: api
+      - uses: actions/checkout@v4
 
-  - job: Frontend
-    displayName: 'Frontend Angular'
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore Backend/AccessiTrack.slnx
+
+      - name: Build solution
+        run: dotnet build Backend/AccessiTrack.slnx --configuration Release --no-restore
+
+      - name: Publish API
+        run: dotnet publish Backend/AccessiTrack.API --configuration Release -o ${{env.DOTNET_ROOT}}/api
+
+      - name: Upload API Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-artifact
+          path: ${{env.DOTNET_ROOT}}/api
+
+  # ----------------------------------------
+  # 2. BUILD DU FRONTEND (Angular 22)
+  # ----------------------------------------
+  build-frontend:
+    runs-on: ubuntu-latest
     steps:
-    - task: UseNode@1
-      displayName: 'Installer Node.js'
-      inputs:
-        version: $(nodeVersion)
-        
-    - powershell: |
-        cd Frontend/Accessitrack.client
-        npm install
-        npx ng build --configuration production
-      displayName: 'npm install et ng build'
-      
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publier artefact Frontend'
-      inputs:
-        pathToPublish: 'Frontend/Accessitrack.client/dist/Accessitrack.client'
-        artifactName: frontend
+      - uses: actions/checkout@v4
 
-- stage: Deploy_Production
-  displayName: 'Deploiement Production'
-  dependsOn: Build_And_Test
-  # S'exécute uniquement si le build réussit et qu'on est sur la branche main
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-  jobs:
-  - job: Deploy_API
-    displayName: 'Deployer API via Kudu'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: npm install and build
+        run: |
+          cd Frontend/Accessitrack.client
+          npm install
+          npx ng build --configuration production
+
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifact
+          path: Frontend/Accessitrack.client/dist/Accessitrack.client
+
+  # ----------------------------------------
+  # 3. DEPLOIEMENT DE L'API (Sur Azure Web App)
+  # ----------------------------------------
+  deploy-api:
+    runs-on: ubuntu-latest
+    needs: build-backend
+    # Se déploie uniquement si on est sur la branche main (comme dans votre ancien script)
+    if: github.ref == 'refs/heads/main'
+    
     steps:
-    - download: current
-      artifact: api
-
-    - task: ArchiveFiles@2
-      displayName: 'Créer l archive ZIP pour déploiement'
-      inputs:
-        rootFolderOrFile: '$(Pipeline.Workspace)/api'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/deploy.zip'
-        replaceExistingArchive: true
-
-    - task: PowerShell@2
-      displayName: 'Push Zip via Kudu API (avec curl)'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Nettoyage de l'URL
-          $urlBase = "$(AZ_URL)".Replace("https://", "").TrimEnd('/')
-          $fullUrl = "https://$urlBase/api/zipdeploy"
-          $zipPath = "$(Build.ArtifactStagingDirectory)/deploy.zip"
-          
-          Write-Host "Cible : $fullUrl"
-          Write-Host "Envoi du fichier ZIP (42 MB) avec curl.exe..."
-          
-          # Utilisation de curl.exe natif (Bypass le bug de Invoke-RestMethod)
-          # Le @ devant $zipPath indique à curl de lire le contenu du fichier
-          curl.exe -f -X POST -u "$($env:DEPLOY_USER):$($env:DEPLOY_PWD)" --data-binary "@$zipPath" "$fullUrl"
-          
-          # Vérification du résultat de curl
-          if ($LASTEXITCODE -eq 0) {
-              Write-Host "##[section]DÉPLOIEMENT TERMINÉ AVEC SUCCÈS"
-          } else {
-              Write-Host "##[error] ÉCHEC DU DÉPLOIEMENT avec curl. Code d'erreur : $LASTEXITCODE"
-              exit 1
-          }
-      env:
-        # MAPPAGE OBLIGATOIRE DES SECRETS
-        DEPLOY_USER: $(AZ_USER)
-        DEPLOY_PWD: $(AZ_PWD)
+      - name: Download API artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-artifact
+          path: ./api-deploy
+      
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'accessitrack-api'
+          package: ./api-deploy
+          # Remplacez le nom du secret par celui généré par GitHub/Azure
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
