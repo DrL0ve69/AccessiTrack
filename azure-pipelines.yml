@@ -24,6 +24,8 @@ stages:
   - job: Backend
     displayName: 'Backend .NET 10'
     steps:
+    - checkout: self
+      clean: true
     - task: UseDotNet@2
       displayName: 'Installer .NET 10'
       inputs:
