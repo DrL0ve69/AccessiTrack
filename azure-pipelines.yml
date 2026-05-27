@@ -1,86 +1,92 @@
-name: Build and deploy Full Stack (AccessiTrack)
-
-on:
-  push:
-    branches:
+trigger:
+  branches:
+    include:
       - main
       - dev
-  workflow_dispatch:
 
-jobs:
-  # ----------------------------------------
-  # 1. BUILD DU BACKEND (.NET 10)
-  # ----------------------------------------
-  build-backend:
-    runs-on: ubuntu-latest
+pool:
+  name: Default # Laissez Default si vous utilisez votre propre agent, sinon mettez ubuntu-latest
+
+# Chargement du groupe de variables globalement
+variables:
+  - group: accessitrack-secrets
+  - name: buildConfiguration
+    value: 'Release'
+  - name: dotnetVersion
+    value: '10.0.x'
+  - name: nodeVersion
+    value: '22.x'
+
+stages:
+- stage: Build_And_Test
+  displayName: 'Build Backend et Frontend'
+  jobs:
+  - job: Backend
+    displayName: 'Backend .NET 10'
+    workspace:
+      clean: all
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Restore dependencies
-        run: dotnet restore Backend/AccessiTrack.slnx
-
-      - name: Build solution
-        run: dotnet build Backend/AccessiTrack.slnx --configuration Release --no-restore
-
-      - name: Publish API
-        run: dotnet publish Backend/AccessiTrack.API --configuration Release -o ${{env.DOTNET_ROOT}}/api
-
-      - name: Upload API Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-artifact
-          path: ${{env.DOTNET_ROOT}}/api
-
-  # ----------------------------------------
-  # 2. BUILD DU FRONTEND (Angular 22)
-  # ----------------------------------------
-  build-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-
-      - name: npm install and build
-        run: |
-          cd Frontend/Accessitrack.client
-          npm install
-          npx ng build --configuration production
-
-      - name: Upload Frontend Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-artifact
-          path: Frontend/Accessitrack.client/dist/Accessitrack.client
-
-  # ----------------------------------------
-  # 3. DEPLOIEMENT DE L'API (Sur Azure Web App)
-  # ----------------------------------------
-  deploy-api:
-    runs-on: ubuntu-latest
-    needs: build-backend
-    # Se déploie uniquement si on est sur la branche main (comme dans votre ancien script)
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Download API artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: api-artifact
-          path: ./api-deploy
+    - checkout: self
+      clean: true
       
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'accessitrack-api'
-          package: ./api-deploy
-          # Remplacez le nom du secret par celui généré par GitHub/Azure
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+    - task: UseDotNet@2
+      displayName: 'Installer .NET 10'
+      inputs:
+        version: $(dotnetVersion)
+        
+    - script: dotnet restore Backend/AccessiTrack.slnx
+      displayName: 'Restore NuGet packages'
+      
+    - script: dotnet build Backend/AccessiTrack.slnx --configuration $(buildConfiguration) --no-restore
+      displayName: 'Build solution'
+      
+    - script: dotnet publish Backend/AccessiTrack.API --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api
+      displayName: 'Publish API'
+      
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publier artefact API'
+      inputs:
+        pathToPublish: $(Build.ArtifactStagingDirectory)/api
+        artifactName: api
+
+  - job: Frontend
+    displayName: 'Frontend Angular (Test de build pour Vercel)'
+    steps:
+    - task: UseNode@1
+      displayName: 'Installer Node.js'
+      inputs:
+        version: $(nodeVersion)
+        
+    - script: |
+        cd Frontend/Accessitrack.client
+        npm install
+        npx ng build --configuration production
+      displayName: 'npm install et ng build'
+      
+    # On publie l'artefact frontend juste au cas où, même si Vercel gère le déploiement réel
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publier artefact Frontend'
+      inputs:
+        pathToPublish: 'Frontend/Accessitrack.client/dist/Accessitrack.client'
+        artifactName: frontend
+
+- stage: Deploy_Production
+  displayName: 'Deploiement API Production'
+  dependsOn: Build_And_Test
+  # S'exécute uniquement si le build réussit et qu'on est sur la branche main
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - job: Deploy_API
+    displayName: 'Deployer API .NET sur Azure App Service'
+    steps:
+    - download: current
+      artifact: api
+
+    # Remplacement de l'ancien script 'curl' instable par la tâche officielle Azure DevOps
+    - task: AzureWebApp@1
+      displayName: 'Déploiement vers Azure Web App'
+      inputs:
+        azureSubscription: 'NOM_DE_VOTRE_CONNEXION_DE_SERVICE' # ⚠️ À MODIFIER
+        appType: 'webAppLinux' # Mettez 'webApp' si votre serveur Azure est sous Windows
+        appName: 'accessitrack-api'
+        package: '$(Pipeline.Workspace)/api'
