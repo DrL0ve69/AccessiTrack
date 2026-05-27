@@ -86,7 +86,7 @@ stages:
     - task: AzureWebApp@1
       displayName: 'Déploiement vers Azure Web App'
       inputs:
-        azureSubscription: 'NOM_DE_VOTRE_CONNEXION_DE_SERVICE' # ⚠️ À MODIFIER
+        azureSubscription: 'AccessiTrack-Deploy-Conn' # ⚠️ À MODIFIER
         appType: 'webAppLinux' # Mettez 'webApp' si votre serveur Azure est sous Windows
         appName: 'accessitrack-api'
         package: '$(Pipeline.Workspace)/api'
