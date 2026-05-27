@@ -145,7 +145,7 @@ export class UserProfileComponent {
 
     this.userProfileService
       .updateProfile(userId, this.profileForm.getRawValue())
-      .pipe(takeUntilDestroyed())
+      .pipe()
       .subscribe({
         next: (updatedProfile) => {
           this.profile.set(updatedProfile);

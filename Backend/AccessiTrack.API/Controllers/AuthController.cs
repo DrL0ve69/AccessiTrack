@@ -1,6 +1,8 @@
 using AccessiTrack.Application.Features.Auth.Commands.Login;
 using AccessiTrack.Application.Features.Auth.Commands.Register;
 using AccessiTrack.Application.Features.Auth.DTOs;
+using AccessiTrack.Application.Features.UserProfile.DTOs;
+using AccessiTrack.Application.Features.UserProfile.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +69,28 @@ public class AuthController : ControllerBase
             Email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
             Role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
         });
+    }
+
+    /// <summary>
+    /// Récupère le profil complet de l'utilisateur connecté
+    /// </summary>
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserProfileDto), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetCurrentUserProfile(CancellationToken ct)
+    {
+        try
+        {
+            var result = await _mediator.Send(new GetCurrentProfileQuery(), ct);
+            return Ok(result); // Retourne enfin les données complètes (FullName, Bio, etc.)
+        }
+        catch (KeyNotFoundException ex)
+        {
+            // Angular recevra une vraie erreur 404 (ce qui correspond à votre intercepteur HttpError)
+            return NotFound(new { errorCode = "UNKNOWN_ERROR", message = "Ressource non trouvée.", details = ex.Message });
+        }
     }
 }
 

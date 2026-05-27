@@ -1,4 +1,5 @@
 using AccessiTrack.Domain.Constants;
+using AccessiTrack.Domain.Entities;
 using AccessiTrack.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ public static class DbSeeder
         // Seed Admin User
         const string adminEmail = "admin@accessitrack.com";
         var admin = await userManager.FindByEmailAsync(adminEmail);
+
         if (admin is null)
         {
             admin = new ApplicationUser
@@ -40,9 +42,30 @@ public static class DbSeeder
                 DisplayName = "Admin",
                 EmailConfirmed = true
             };
-            await userManager.CreateAsync(admin, "Admin@123!");
-            await userManager.AddToRoleAsync(admin, Roles.Admin);
-            await context.SaveChangesAsync();
+
+            var result = await userManager.CreateAsync(admin, "Admin@123!");
+            // await userManager.AddToRoleAsync(admin, Roles.Admin);
+            // await context.SaveChangesAsync();
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(admin, Roles.Admin);
+
+                // --- AJOUT ICI : Création du profil associé ---
+                if (!context.UserProfiles.Any(p => p.IdentityId == admin.Id.ToString()))
+                {
+                    context.UserProfiles.Add(new UserProfile
+                    {
+                        Id = Guid.NewGuid(),
+                        IdentityId = admin.Id.ToString(), // Le lien crucial
+                        FullName = "Administrateur Système",
+                        Email = adminEmail,
+                        PreferredLanguage = "fr-CA",
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    await context.SaveChangesAsync();
+                }
+            }
         }
     }
 }

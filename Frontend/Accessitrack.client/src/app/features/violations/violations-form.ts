@@ -39,11 +39,12 @@ export class ViolationFormComponent {
     { value: '4.1.2', label: '4.1.2 — Nom, rôle, valeur' },
   ];
 
-  readonly severityMap = { Critical: 1, Major: 2, Minor: 3 };
+  readonly severityMap = { Critical: 1, Major: 2, Moderate: 3, Minor: 4 };
 
   readonly severityOptions = [
     { value: 'Critical', label: 'Critique' },
     { value: 'Major', label: 'Majeur' },
+    { value: 'Moderate', label: 'Modéré' },
     { value: 'Minor', label: 'Mineur' },
   ];
 
